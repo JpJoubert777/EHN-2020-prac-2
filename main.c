@@ -1,6 +1,19 @@
+/**
+ * @file main.c
+ * @author Jp Joubert (jpemail777@gmail.com)
+ * @brief AES Implementation
+ * @version 1
+ * @date 2020-04-13
+ * 
+ * 
+ */
+/* Headers */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+
+// Array containing the Rijndael S-box used in the core key sheduler
 //source: https://cryptography.fandom.com/wiki/Rijndael_S-box
 unsigned char sBox[256] =  
  {0x63 ,0x7c ,0x77 ,0x7b ,0xf2 ,0x6b ,0x6f ,0xc5 ,0x30 ,0x01 ,0x67 ,0x2b ,0xfe ,0xd7 ,0xab ,0x76
@@ -20,6 +33,7 @@ unsigned char sBox[256] =
  ,0xe1 ,0xf8 ,0x98 ,0x11 ,0x69 ,0xd9 ,0x8e ,0x94 ,0x9b ,0x1e ,0x87 ,0xe9 ,0xce ,0x55 ,0x28 ,0xdf
  ,0x8c ,0xa1 ,0x89 ,0x0d ,0xbf ,0xe6 ,0x42 ,0x68 ,0x41 ,0x99 ,0x2d ,0x0f ,0xb0 ,0x54 ,0xbb ,0x16};
 
+// Ditto but the inverse
 unsigned char inverseSbox[256] =
  {0x52 ,0x09, 0x6a ,0xd5 ,0x30 ,0x36 ,0xa5 ,0x38 ,0xbf ,0x40 ,0xa3 ,0x9e ,0x81 ,0xf3 ,0xd7 ,0xfb
  ,0x7c ,0xe3, 0x39 ,0x82 ,0x9b ,0x2f ,0xff ,0x87 ,0x34 ,0x8e ,0x43 ,0x44 ,0xc4 ,0xde ,0xe9 ,0xcb
@@ -38,7 +52,10 @@ unsigned char inverseSbox[256] =
  ,0xa0 ,0xe0, 0x3b ,0x4d ,0xae ,0x2a ,0xf5 ,0xb0 ,0xc8 ,0xeb ,0xbb ,0x3c ,0x83 ,0x53 ,0x99 ,0x61
  ,0x17 ,0x2b, 0x04 ,0x7e ,0xba ,0x77 ,0xd6 ,0x26 ,0xe1 ,0x69 ,0x14 ,0x63 ,0x55 ,0x21 ,0x0c ,0x7d};
 
+// Galois multiplication lookup tables
 //source: https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+
+//Contains the results of multiplying the numbers 0-255 with 2 modulo (x^4 + 1)
 unsigned char multiply2[] = {
 0x00,0x02,0x04,0x06,0x08,0x0a,0x0c,0x0e,0x10,0x12,0x14,0x16,0x18,0x1a,0x1c,0x1e,
 0x20,0x22,0x24,0x26,0x28,0x2a,0x2c,0x2e,0x30,0x32,0x34,0x36,0x38,0x3a,0x3c,0x3e,
@@ -57,6 +74,7 @@ unsigned char multiply2[] = {
 0xdb,0xd9,0xdf,0xdd,0xd3,0xd1,0xd7,0xd5,0xcb,0xc9,0xcf,0xcd,0xc3,0xc1,0xc7,0xc5,
 0xfb,0xf9,0xff,0xfd,0xf3,0xf1,0xf7,0xf5,0xeb,0xe9,0xef,0xed,0xe3,0xe1,0xe7,0xe5};
 
+//Contains the results of multiplying the numbers 0-255 with 3 modulo (x^4 + 1)
 unsigned char multiply3[] = {
 0x00,0x03,0x06,0x05,0x0c,0x0f,0x0a,0x09,0x18,0x1b,0x1e,0x1d,0x14,0x17,0x12,0x11,
 0x30,0x33,0x36,0x35,0x3c,0x3f,0x3a,0x39,0x28,0x2b,0x2e,0x2d,0x24,0x27,0x22,0x21,
@@ -75,6 +93,7 @@ unsigned char multiply3[] = {
 0x3b,0x38,0x3d,0x3e,0x37,0x34,0x31,0x32,0x23,0x20,0x25,0x26,0x2f,0x2c,0x29,0x2a,
 0x0b,0x08,0x0d,0x0e,0x07,0x04,0x01,0x02,0x13,0x10,0x15,0x16,0x1f,0x1c,0x19,0x1a};
 
+//Contains the results of multiplying the numbers 0-255 with 9 modulo (x^4 + 1)
 unsigned char multiply9[] = {
 0x00,0x09,0x12,0x1b,0x24,0x2d,0x36,0x3f,0x48,0x41,0x5a,0x53,0x6c,0x65,0x7e,0x77,
 0x90,0x99,0x82,0x8b,0xb4,0xbd,0xa6,0xaf,0xd8,0xd1,0xca,0xc3,0xfc,0xf5,0xee,0xe7,
@@ -93,6 +112,7 @@ unsigned char multiply9[] = {
 0xa1,0xa8,0xb3,0xba,0x85,0x8c,0x97,0x9e,0xe9,0xe0,0xfb,0xf2,0xcd,0xc4,0xdf,0xd6,
 0x31,0x38,0x23,0x2a,0x15,0x1c,0x07,0x0e,0x79,0x70,0x6b,0x62,0x5d,0x54,0x4f,0x46};
 
+//Contains the results of multiplying the numbers 0-255 with 11 modulo (x^4 + 1)
 unsigned char multiply11[] = {
 0x00,0x0b,0x16,0x1d,0x2c,0x27,0x3a,0x31,0x58,0x53,0x4e,0x45,0x74,0x7f,0x62,0x69,
 0xb0,0xbb,0xa6,0xad,0x9c,0x97,0x8a,0x81,0xe8,0xe3,0xfe,0xf5,0xc4,0xcf,0xd2,0xd9,
@@ -111,6 +131,7 @@ unsigned char multiply11[] = {
 0x7a,0x71,0x6c,0x67,0x56,0x5d,0x40,0x4b,0x22,0x29,0x34,0x3f,0x0e,0x05,0x18,0x13,
 0xca,0xc1,0xdc,0xd7,0xe6,0xed,0xf0,0xfb,0x92,0x99,0x84,0x8f,0xbe,0xb5,0xa8,0xa3};
 
+//Contains the results of multiplying the numbers 0-255 with 13 modulo (x^4 + 1)
 unsigned char multiply13[] = {
 0x00,0x0d,0x1a,0x17,0x34,0x39,0x2e,0x23,0x68,0x65,0x72,0x7f,0x5c,0x51,0x46,0x4b,
 0xd0,0xdd,0xca,0xc7,0xe4,0xe9,0xfe,0xf3,0xb8,0xb5,0xa2,0xaf,0x8c,0x81,0x96,0x9b,
@@ -129,6 +150,7 @@ unsigned char multiply13[] = {
 0x0c,0x01,0x16,0x1b,0x38,0x35,0x22,0x2f,0x64,0x69,0x7e,0x73,0x50,0x5d,0x4a,0x47,
 0xdc,0xd1,0xc6,0xcb,0xe8,0xe5,0xf2,0xff,0xb4,0xb9,0xae,0xa3,0x80,0x8d,0x9a,0x97};
 
+//Contains the results of multiplying the numbers 0-255 with 14 modulo (x^4 + 1)
 unsigned char multiply14[] = {
 0x00,0x0e,0x1c,0x12,0x38,0x36,0x24,0x2a,0x70,0x7e,0x6c,0x62,0x48,0x46,0x54,0x5a,
 0xe0,0xee,0xfc,0xf2,0xd8,0xd6,0xc4,0xca,0x90,0x9e,0x8c,0x82,0xa8,0xa6,0xb4,0xba,
@@ -147,6 +169,7 @@ unsigned char multiply14[] = {
 0x37,0x39,0x2b,0x25,0x0f,0x01,0x13,0x1d,0x47,0x49,0x5b,0x55,0x7f,0x71,0x63,0x6d,
 0xd7,0xd9,0xcb,0xc5,0xef,0xe1,0xf3,0xfd,0xa7,0xa9,0xbb,0xb5,0x9f,0x91,0x83,0x8d};
 
+//A handy array that returns the Rcon value given the Rcon index
 //source: https://cryptography.fandom.com/wiki/Rijndael_key_schedule
 unsigned char Rcon[255] = {
 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 
@@ -166,7 +189,12 @@ unsigned char Rcon[255] = {
 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 
 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb};
 
-
+/**
+ * @brief Prints the state array as characters to the console 
+ * 
+ * @param state The 16-byte (4x4 bytes) 2D array of the state vector 
+ * @return void
+ */
 void printStateChar(unsigned char state[4][4])
 {
 	for (int i = 0; i < 4; i++)
@@ -180,7 +208,12 @@ void printStateChar(unsigned char state[4][4])
 	printf("\n");
 }
 
-
+/**
+ * @brief Prints the state array as hex values to the console
+ * 
+ * @param state The 16-byte (4x4 bytes) 2D array of the state vector 
+ * @return void
+ */
 void printStateHex(unsigned char state[4][4])
 {
 	for (int i = 0; i < 4; i++)
@@ -194,6 +227,13 @@ void printStateHex(unsigned char state[4][4])
 	printf("\n");
 }
 
+/**
+ * @brief Sets state[0][0] as plaintext[0], state[0][1] as plaintext[1], etc.
+ * 
+ * @param plaintext A 16-char 1D array containing a string of plaintext
+ * @param state A 4x4 ouput array where the plaintext will be stored
+ * @return void
+ */
 void make4x4block(unsigned char plaintext[16],unsigned char state[4][4])
 {
 	/*
@@ -217,7 +257,12 @@ void make4x4block(unsigned char plaintext[16],unsigned char state[4][4])
 
 }
 
-
+/**
+ * @brief Turns the rows of a 4x4 array into columns
+ * 
+ * @param state A 4x4 array where the plaintext has been stored that must have the rows and columns swapped
+ * @return void
+ */
 void formatInputBlock(unsigned char state[4][4])
 {
 
@@ -229,8 +274,10 @@ void formatInputBlock(unsigned char state[4][4])
 	 	M,N,O,P      D,H,L,P
 	*/
 
+	//temporary storage to avoid overwriting 
 	unsigned char tempArray[4][4];
 
+	//swap rows and columns
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -238,6 +285,7 @@ void formatInputBlock(unsigned char state[4][4])
 			tempArray[i][j] = state[j][i];
 		}
 	}
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -251,16 +299,29 @@ void formatInputBlock(unsigned char state[4][4])
 	printStateHex(state);*/
 
 }
-
+/**
+ * @brief Sets state[0][0] as plaintext[0], state[1][0] as plaintext[1], etc.
+ * 
+ * @param plaintext A 16-char 1D array containing a string of plaintext
+ * @param state A 4x4 array where the plaintext will be stored
+ * @return void
+ */
 void prepareInput(unsigned char plaintext[16],unsigned char state[4][4])
 {
 	make4x4block(plaintext,state);
 	formatInputBlock(state);
 }
-
+/**
+ * @brief Uses the values inside of the state vector as indexes to the sBox and substitutes correspondingly 
+ * 
+ * @param state A 4x4 array where the state vector has been stored that must have substitutions performed
+ * @return void
+ */
 void substituteBytes(unsigned char state[4][4])
 {
 
+	//Use the contents of each element as an index to the sBox array.
+	//Substitute the element with the contents in the sBox at that index.
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -274,9 +335,16 @@ void substituteBytes(unsigned char state[4][4])
 	*/
 }
 
+/**
+ * @brief Uses the values inside of the state vector as indexes to the inverse sBox and substitutes correspondingly 
+ * 
+ * @param state A 4x4 array where the state vector has been stored that must have invserse substitutions performed
+ * @return void
+ */
 void inverseSubstituteBytes(unsigned char state[4][4])
 {
-
+	//Use the contents of each element as an index to the inverseSbox array.
+	//Substitute the element with the contents in the inverseSbox at that index.
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -289,11 +357,18 @@ void inverseSubstituteBytes(unsigned char state[4][4])
 	printStateHex(state);*/
 	
 }
-
+/**
+ * @brief Shifts the second row to the left by 1, the 3rd row by 2 and the 4th row by 3
+ * 
+ * @param state A 4x4 array where the state vector has been stored that must have the rows shifted
+ * @return void
+ */
 void shiftRows(unsigned char state[4][4])
 {
+	//temporary storage
 	unsigned char tempArray[4][4];
 
+	//perform shifting
 	tempArray[0][0] = state[0][0];
 	tempArray[0][1] = state[0][1];
 	tempArray[0][2] = state[0][2];
@@ -313,6 +388,7 @@ void shiftRows(unsigned char state[4][4])
 	tempArray[3][1] = state[3][0];
 	tempArray[3][2] = state[3][1];
 	tempArray[3][3] = state[3][2];
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -323,11 +399,16 @@ void shiftRows(unsigned char state[4][4])
 	printf("shiftRows:\n");
 	printStateHex(state);*/
 }
-
+/**
+ * @brief Reverses a shift row operation that has already been performed
+ * 
+ * @param state A 4x4 array where the state vector has been stored that must have the rows shifted back to their original positions
+ * @return void
+ */
 void inverseShiftRows(unsigned char state[4][4])
-{
+{	//temporary storage
 	unsigned char tempArray[4][4];
-
+	//perform shifting
 	tempArray[0][0] = state[0][0];
 	tempArray[0][1] = state[0][1];
 	tempArray[0][2] = state[0][2];
@@ -347,6 +428,7 @@ void inverseShiftRows(unsigned char state[4][4])
 	tempArray[3][1] = state[3][2];
 	tempArray[3][2] = state[3][3];
 	tempArray[3][3] = state[3][0];
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -358,10 +440,29 @@ void inverseShiftRows(unsigned char state[4][4])
 	printStateHex(state);*/
 }
 
+/**
+ * @brief Performs the XOR dot product multiplication mod (x^4 + 1) with the contents of state and Rijndael's Galois Field vector
+ *        
+ * @param state A 4x4 array where the state vector has been stored that must have the columns mixed
+ * @return void
+ */
 void mixColumns(unsigned char state[4][4])
 {
+	//temporary storage
 	unsigned char tempArray[4][4];
 
+	//for example; if state[0][0] has 0x01 and you want to perform polynomial multiplication with 2 in the Galois field:
+	//    	       Simply use 0x01 as the index to the multiply2 array. The contents there is the answer
+	//             so you lookup multiply2[state[0][0]] = multiply2[0x01] = multiply2[1] = 0x02 
+	// note there is no multiply1 array because such an operation does not change the contents of the input
+	//the arrays multiply2 and multiply3 are chosen due to the Galois field array containing the following:
+	/*
+	[2][3][1][1]                                    [s00][s01][s02][s03]
+	[1][2][3][1]   which we want to multiply with   [s10][s11][s12][s13]
+        [1][1][2][3]                                    [s20][s21][s22][s23]
+	[3][1][1][2]			                [s30][s31][s32][s33]
+			                                    s = state
+	*/		
 	tempArray[0][0] = (multiply2[state[0][0]] ^ multiply3[state[1][0]] ^ state[2][0] ^ state[3][0]);
 	tempArray[1][0] = (state[0][0] ^ multiply2[state[1][0]] ^ multiply3[state[2][0]] ^ state[3][0]);
 	tempArray[2][0] = (state[0][0] ^ state[1][0] ^ multiply2[state[2][0]] ^ multiply3[state[3][0]]);
@@ -381,7 +482,7 @@ void mixColumns(unsigned char state[4][4])
 	tempArray[1][3] = (state[0][3] ^ multiply2[state[1][3]] ^ multiply3[state[2][3]] ^ state[3][3]);
 	tempArray[2][3] = (state[0][3] ^ state[1][3] ^ multiply2[state[2][3]] ^ multiply3[state[3][3]]);
 	tempArray[3][3] = (multiply3[state[0][3]] ^ state[1][3] ^ state[2][3] ^ multiply2[state[3][3]]);
-
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -392,11 +493,27 @@ void mixColumns(unsigned char state[4][4])
 	/*printf("mixColumns:\n");
 	printStateHex(state);*/
 }
-
+/**
+ * @brief Performs the XOR dot product multiplication mod (x^4 + 1) with the contents of state and Rijndael's inverse Galois Field vector
+ *        
+ * @param state A 4x4 array where the columns have been mixed and must be unmixed
+ * @return void
+ */
 void inverseMixColumns(unsigned char state[4][4])
 {
+	//temporary storage
 	unsigned char tempArray[4][4];
-
+	//for example; if state[0][0] has 0x01 and you want to perform polynomial multiplication with 2 in the Galois field:
+	//    	       Simply use 0x01 as the index to the multiply2 array. The contents there is the answer
+	//             so you lookup multiply2[state[0][0]] = multiply2[0x01] = multiply2[1] = 0x02 
+	//the arrays multiply9,multiply11,multiply13 and multiply14 are chosen due to the Galois field array containing the following:
+	/*
+	[14][11][13][09]                                    [s00][s01][s02][s03]
+	[09][14][11][13]   which we want to multiply with   [s10][s11][s12][s13]
+        [13][09][14][11]                                    [s20][s21][s22][s23]
+	[11][13][09][14]			            [s30][s31][s32][s33]
+                                                                  s = state
+	*/	
 	tempArray[0][0] = multiply14[state[0][0]] ^ multiply11[state[1][0]] ^ multiply13[state[2][0]] ^ multiply9[state[3][0]]; 
 	tempArray[1][0] = multiply9[state[0][0]] ^ multiply14[state[1][0]] ^ multiply11[state[2][0]] ^ multiply13[state[3][0]];  
 	tempArray[2][0] = multiply13[state[0][0]] ^ multiply9[state[1][0]] ^ multiply14[state[2][0]] ^ multiply11[state[3][0]];  
@@ -416,7 +533,7 @@ void inverseMixColumns(unsigned char state[4][4])
 	tempArray[1][3] = multiply9[state[0][3]] ^ multiply14[state[1][3]] ^ multiply11[state[2][3]] ^ multiply13[state[3][3]]; 
 	tempArray[2][3] = multiply13[state[0][3]] ^ multiply9[state[1][3]] ^ multiply14[state[2][3]] ^ multiply11[state[3][3]]; 
 	tempArray[3][3] = multiply11[state[0][3]] ^ multiply13[state[1][3]] ^ multiply9[state[2][3]] ^ multiply14[state[3][3]]; 
-
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
@@ -427,16 +544,24 @@ void inverseMixColumns(unsigned char state[4][4])
 	/*printf("inverseMixColumns:\n");
 	printStateHex(state);*/
 }
-
+/**
+ * @brief Transforms four bytes according to Rijndael's core key scheduler
+ *        
+ * @param input4bytes An array of four bytes that need to be transformed
+ * @param counter An integer representing the Rcon iteration number
+ * @return void
+ */
 void coreKeyScheduler(unsigned char input4bytes[4], int counter)
 {
-
+	//temporary storage
 	unsigned char tempArray[4];
+	//combination of rotating input and substituting sBox
 	tempArray[0] = sBox[input4bytes[1]];
 	tempArray[1] = sBox[input4bytes[2]];
 	tempArray[2] = sBox[input4bytes[3]];
 	tempArray[3] = sBox[input4bytes[0]];
-	
+
+	//XOR leftmost byte with exponentiation of 2 (IE the Rcon operation)
 	tempArray[0] ^= Rcon[counter];
 
 	/*printf("coreKeyScheduler:\n");
@@ -446,6 +571,8 @@ void coreKeyScheduler(unsigned char input4bytes[4], int counter)
 		printf("%02x ",input4bytes[i]);
 	}
 	printf("\nafter:\n");*/
+	
+	//copy to output
 	for (int i = 0; i < 4; i++)
 	{
 		input4bytes[i] = tempArray[i];
@@ -454,42 +581,113 @@ void coreKeyScheduler(unsigned char input4bytes[4], int counter)
 	//printf("\n");	
 	
 }
-
-void keyExpander128(unsigned char inputKey[16], unsigned char expandedKeyArray[11][4][4])
+/**
+ * @brief Expands a 16, 24 or 32 byte key into a 11, 13 or 15 keys depending on the numBits
+ *        
+ * @param inputKey An input 1D array that can contain up to 32 bytes
+ * @param expandedKeyArray An output array that can contain up to 15 4x4 byte keys
+ * @param numBits An integer indicating how many bits the key should use
+ * @return void
+ */
+void keyExpander(unsigned char inputKey[32], unsigned char expandedKeyArray[15][4][4],int numBits)
 {
-	unsigned char expandedKey[176];
-	for (int i = 0; i < 16; i++)
+	int numRounds;
+	int noneRConRounds; // some rounds don't have an Rcon operation
+
+	//determine required rounds
+	if (numBits == 128)
+	{
+		numRounds = 11;
+		noneRConRounds = 3;
+	}
+		
+	if (numBits == 192)
+	{
+		numRounds = 13;
+		noneRConRounds = 5;
+	}
+		
+	if (numBits == 256)
+	{
+		numRounds = 15;
+		noneRConRounds = 7;
+	}
+
+	//the number of bytes is dependent on the number of bits chosen
+	int numBytes = numBits/8;	
+	unsigned char expandedKey[240]; //largest a key will get
+
+	//copy over the original encryption key
+	for (int i = 0; i < numBytes; i++)
 	{
 		expandedKey[i] = inputKey[i];
 	}
+	//set rcon to 1
 	int rcon = 1;
-	int numBytes = 16;
-	while (numBytes < 176)
+	//while we don't have a 16 byte key for each round
+	while (numBytes < numRounds*16)
 	{
+		//create temporary variable and assign previous 4 bytes of expanded key to it
 		unsigned char t[4];
 		t[0] = expandedKey[numBytes - 4];
 		t[1] = expandedKey[numBytes - 3];
 		t[2] = expandedKey[numBytes - 2];
 		t[3] = expandedKey[numBytes - 1];
+		//send to the core key scheduler
 		coreKeyScheduler(t,rcon);
+		//increment rcon
 		rcon++;
-		expandedKey[numBytes + 0] = t[0] ^ expandedKey[numBytes-16];
-		expandedKey[numBytes + 1] = t[1] ^ expandedKey[numBytes-15];
-		expandedKey[numBytes + 2] = t[2] ^ expandedKey[numBytes-14];
-		expandedKey[numBytes + 3] = t[3] ^ expandedKey[numBytes-13];
+		//caclulate offset to place us the required number of bytes before the expanded key (16,24 or 32)
+		int offset = numBytes - (numBits/8);
+		//xor the output of the core key scheduler with a 4-byte block before the expanded key
+		expandedKey[numBytes + 0] = t[0] ^ expandedKey[offset+0];
+		expandedKey[numBytes + 1] = t[1] ^ expandedKey[offset+1];
+		expandedKey[numBytes + 2] = t[2] ^ expandedKey[offset+2];
+		expandedKey[numBytes + 3] = t[3] ^ expandedKey[offset+3];
 		numBytes += 4;
-		for (int i = 0; i < 3; i++)
+		//execute the rounds that must not use the core key scheduler
+		for (int i = 0; i < noneRConRounds; i++)
 		{
-			unsigned char t[4];
-			t[0] = expandedKey[numBytes - 4];
-			t[1] = expandedKey[numBytes - 3];
-			t[2] = expandedKey[numBytes - 2];
-			t[3] = expandedKey[numBytes - 1];
-			expandedKey[numBytes + 0] = t[0] ^ expandedKey[numBytes-16];
-			expandedKey[numBytes + 1] = t[1] ^ expandedKey[numBytes-15];
-			expandedKey[numBytes + 2] = t[2] ^ expandedKey[numBytes-14];
-			expandedKey[numBytes + 3] = t[3] ^ expandedKey[numBytes-13];
-			numBytes += 4;
+			//if we have already reached our limit, break
+			if (numBytes >= numRounds*16)
+				break;
+			//special property of 256-bit keys; every 8 rounds the sBox is used (8 rounds works out as whenever i == 3)
+			if ((numBits == 256)&&(i == 3))
+			{
+				//create temporary variable and assign previous 4 bytes of expanded key to it
+				unsigned char t[4];
+				//perform sBox substitutions
+				t[0] = sBox[expandedKey[numBytes - 4]];
+				t[1] = sBox[expandedKey[numBytes - 3]];
+				t[2] = sBox[expandedKey[numBytes - 2]];
+				t[3] = sBox[expandedKey[numBytes - 1]];
+				//caclulate offset to place us the required number of bytes before the expanded key
+				int offset = numBytes - (numBits/8);
+				//xor
+				expandedKey[numBytes + 0] = t[0] ^ expandedKey[offset+0];
+				expandedKey[numBytes + 1] = t[1] ^ expandedKey[offset+1];
+				expandedKey[numBytes + 2] = t[2] ^ expandedKey[offset+2];
+				expandedKey[numBytes + 3] = t[3] ^ expandedKey[offset+3];
+				numBytes += 4;	
+			}
+			else //it isn't 8 rounds yet or we aren't doing 256 bits
+			{
+				//create temporary variable and assign previous 4 bytes of expanded key to it
+				unsigned char t[4];
+				t[0] = expandedKey[numBytes - 4];
+				t[1] = expandedKey[numBytes - 3];
+				t[2] = expandedKey[numBytes - 2];
+				t[3] = expandedKey[numBytes - 1];
+				//caclulate offset to place us the required number of bytes before the expanded key
+				int offset = numBytes - (numBits/8);
+				//xor
+				expandedKey[numBytes + 0] = t[0] ^ expandedKey[offset+0];
+				expandedKey[numBytes + 1] = t[1] ^ expandedKey[offset+1];
+				expandedKey[numBytes + 2] = t[2] ^ expandedKey[offset+2];
+				expandedKey[numBytes + 3] = t[3] ^ expandedKey[offset+3];
+				numBytes += 4;
+			}
+			
 		}		
 	}
 	/*
@@ -500,7 +698,9 @@ void keyExpander128(unsigned char inputKey[16], unsigned char expandedKeyArray[1
 	}
 	printf("\n");	
 	*/
-	for (int i = 0; i < 11; i++)
+
+	//copy a key for each round to the expandedKeyArray
+	for (int i = 0; i < numRounds; i++)
 	{
 		unsigned char array16[16];
 		unsigned char tempArray[4][4];
@@ -518,7 +718,13 @@ void keyExpander128(unsigned char inputKey[16], unsigned char expandedKeyArray[1
 		printStateHex(expandedKeyArray[x]);
 	printf("###############################################\n");*/
 }
-
+/**
+ * @brief Adds a key to a state by performing an XOR 
+ *        
+ * @param state A 2D array containing the present state that needs a key added to it
+ * @param key A 2D array containing the key to be XOR'ed to the state
+ * @return void
+ */
 void addRoundKey(unsigned char state[4][4],unsigned char key[4][4])
 {
 	/*
@@ -539,16 +745,32 @@ void addRoundKey(unsigned char state[4][4],unsigned char key[4][4])
 	printStateHex(state);*/
 }
 
-
-void encrypt128(unsigned char plaintext[16],unsigned char expandedKeys128[11][4][4])
+/**
+ * @brief Applies 11,13 or 15 encryption rounds (including the intial round) depending on the numBits
+ *        
+ * @param plaintext A 1D array containing the 16 bytes of plaintex to be encrypted
+ * @param expandedKeys An array containing a round key for each round of encryption
+ * @param numBits An integer indicating how many bits the key should use
+ * @return void
+ */
+void applyEncryptionRounds(unsigned char plaintext[16],unsigned char expandedKeys[15][4][4],int numBits)
 {
-
+	//determine required rounds
+	int numRounds;
+	if (numBits == 128)
+		numRounds = 11;
+	if (numBits == 192)
+		numRounds = 13;
+	if (numBits == 256)
+		numRounds = 15;
+	//create the state vector
 	unsigned char state[4][4];
+	//start at round 0
 	int i = 0;
 
-	unsigned char printState[4][4];
-
+	//send plaintext to the state vector
 	prepareInput(plaintext,state);
+
 	/*printf("Input plaintext with padding:\n");
 	printStateChar(state);
 	printStateHex(state);
@@ -556,8 +778,12 @@ void encrypt128(unsigned char plaintext[16],unsigned char expandedKeys128[11][4]
 	printf("\nround %d\n\n\n",i);
 	printf("state:\n");
 	printStateHex(state);*/
-	addRoundKey(state,expandedKeys128[i]);
-	for (i = 1; i < 10; i ++)
+
+	//add round key for this initial round
+	addRoundKey(state,expandedKeys[i]);
+
+	//for each round excluding the very last one
+	for (i = 1; i < numRounds-1; i ++)
 	{
 		/*printf("\nround %d\n\n\n",i);
 		printf("state:\n");
@@ -565,35 +791,58 @@ void encrypt128(unsigned char plaintext[16],unsigned char expandedKeys128[11][4]
 		substituteBytes(state);
 		shiftRows(state);
 		mixColumns(state);
-		addRoundKey(state,expandedKeys128[i]);
+		addRoundKey(state,expandedKeys[i]);
 	}
 	/*printf("\nround %d\n\n\n",i);
 	printf("state:\n");
 	printStateHex(state);*/
+
+	//final round
 	substituteBytes(state);
 	shiftRows(state);
-	addRoundKey(state,expandedKeys128[i]);
+	addRoundKey(state,expandedKeys[i]);
 
-	printf("Cyphertext:\n");
+	//copy encrypted output
+	//printf("Cyphertext:\n");
 	int index = 0;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
 		{
 			plaintext[index] = state[j][i];
-			printf("%02x ", plaintext[index]); 
+			//printf("%02x ", plaintext[index]); 
 			index++;
 		}
 			
 	printf("\n");
 }
-
-void decrypt128(unsigned char cyphertext[16],unsigned char expandedKeys128[11][4][4])
+/**
+ * @brief Applies 11,13 or 15 decryption rounds (including the intial round) depending on the numBits
+ *        
+ * @param cyphertex A 1D array containing the 16 bytes of cyphertex to be decrypted
+ * @param expandedKeys An array containing a round key for each round of encryption
+ * @param numBits An integer indicating how many bits the key should use
+ * @return void
+ */
+void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKeys[15][4][4], int numBits)
 {
+	//determine required rounds
+	int numRounds;
+	if (numBits == 128)
+		numRounds = 11;
+	if (numBits == 192)
+		numRounds = 13;
+	if (numBits == 256)
+		numRounds = 15;
 
+	//create the state vector
 	unsigned char state[4][4];
-	int i = 10;
 
+	//start from the last round 
+	int i = numRounds-1;
+
+	//send plaintext to the state vector
 	prepareInput(cyphertext,state);
+
 	/*printf("Input cyphertext:\n");
 	printStateChar(state);
 	printStateHex(state);
@@ -601,25 +850,31 @@ void decrypt128(unsigned char cyphertext[16],unsigned char expandedKeys128[11][4
 	printf("\nround %d\n\n\n",i);
 	printf("decrypt state:\n");
 	printStateHex(state);*/
-	addRoundKey(state,expandedKeys128[i]);
-	for (i = 9; i > 0; i --)
+
+	//add round key for this round
+	addRoundKey(state,expandedKeys[i]);
+	for (i = numRounds-2; i > 0; i --)//work backwards
 	{
 		/*printf("\nround %d\n\n\n",i);
 		printf("decrypt state:\n");
 		printStateHex(state);*/
 		inverseShiftRows(state);
 		inverseSubstituteBytes(state);
-		addRoundKey(state,expandedKeys128[i]);
+		addRoundKey(state,expandedKeys[i]);
 		inverseMixColumns(state);
 		
 	}
 	/*printf("\nround %d\n\n\n",i);
 	printf("decrypt state:\n");
 	printStateHex(state);*/
+
+	//final round
 	inverseShiftRows(state);
 	inverseSubstituteBytes(state);
-	addRoundKey(state,expandedKeys128[i]);
+	addRoundKey(state,expandedKeys[i]);
 
+	//copy decrypted output
+	//printf("Decryptedtext:\n");
 	int index = 0;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
@@ -630,12 +885,22 @@ void decrypt128(unsigned char cyphertext[16],unsigned char expandedKeys128[11][4
 		}	
 	//printf("\n");
 }
-
-void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys128[11][4][4],int numBlocks, unsigned char cyphertext[])
+/**
+ * @brief Performs incryption on a plaintext string of arbitray length by breaking it into 16-byte blocks.
+ *        
+ * @param paddedString A string padded with zeros to be 16 bytes long
+ * @param expandedKeys An array containing a round key for each round of encryption
+ * @param numBlocks An integer indicating how many blocks will be encrypted
+ * @param cyphertext An output array that will contain the cyphertext
+ * @param numBits An integer indicating how many bits the key should use
+ * @return void
+ */
+void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys[15][4][4],int numBlocks, unsigned char cyphertext[],int numbits)
 {
-	
+	//for the required number of blocks
 	for (int x = 0; x < numBlocks; x++)
 	{
+		//create the block and copy the string to it
 		unsigned char block[16];
 		printf("Block %d\n",x);
 		printf("Plaintext:\n");
@@ -643,12 +908,14 @@ void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys128[11][4
 		{
 				block[y] = paddedString[y + 16*x];
 		}
-	
+		//print the block
 		for (int z = 0; z < 16; z++)
 			printf("%c",block[z]);
 		printf("\n");
-		encrypt128(block,expandedKeys128);
+		//encrypt the block
+		applyEncryptionRounds(block,expandedKeys,numbits);
 		printf("\n");
+		//copy output
 		for (int y = 0; y < 16; y++)
 		{
 				cyphertext[y + 16*x] = block[y];
@@ -656,23 +923,37 @@ void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys128[11][4
 	}
 
 }
-
-void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys128[11][4][4],int numBlocks,unsigned char plaintext[])
+/**
+ * @brief Performs decryption on a cyphertext string of arbitray length by breaking it into 16-byte blocks.
+ *        
+ * @param cyphertext A string containing encrypted characters
+ * @param expandedKeys An array containing a round key for each round of encryption
+ * @param numBlocks An integer indicating how many blocks will be decrypted
+ * @param plaintext An output array that will contain the plaintext
+ * @param numBits An integer indicating how many bits the key should use
+ * @return void
+ */
+void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys[15][4][4],int numBlocks,unsigned char plaintext[],int numbits)
 {
+	//for the required number of blocks
 	for (int x = 0; x < numBlocks; x++)
 	{
+		//create the block and copy the string to it
 		unsigned char block[16];
 		for (int y = 0; y < 16; y++)
 		{
 				block[y] = cyphertext[y + 16*x];
 		}
+		//print the block
 		printf("Block %d\n",x);
 		printf("Cyphertext:\n");
 		for (int z = 0; z < 16; z++)
 			printf("%02x ",block[z]);
 		printf("\n");
-		decrypt128(block,expandedKeys128);
+		//decrypt the block
+		applyDecryptionRounds(block,expandedKeys,numbits);
 		printf("\n");
+		//copy output
 		for (int y = 0; y < 16; y++)
 		{
 				plaintext[y + 16*x] = block[y];
@@ -680,103 +961,119 @@ void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys128[11][4][
 	}
 }
 
-
-int getRequiredLength(unsigned char plaintext[])
+/**
+ * @brief Gets the required length of a string so that the length is a multiple of 16
+ *        
+ * @param plaintext Any character string 
+ * @return void
+ */
+int getrequiredLength(unsigned char plaintext[])
 {
+	//get the original length and just keep counting up until length mod 16 = 0, then return that length
 	int length = strlen(plaintext);
-	//printf("length: %d\n",length);
-	int requiredLength = length;
-	while (requiredLength % 16 != 0)
-		requiredLength++;
-	//printf("requiredLength = %d\n",requiredLength);
-	return requiredLength;
-}
-
-void addPadding(unsigned char oldPlaintext[], unsigned char newPlaintext[])
-{
-	int originalLength = strlen(oldPlaintext);
-	//printf("originalLength: %d\n",originalLength);
-	for (int i = 0; i < originalLength; i++)
-		newPlaintext[i] = oldPlaintext[i];
-	if (originalLength < 16)
-		for (int i = originalLength; i < 16; i++)
-		{	//printf("i: %d\n",i);
-			newPlaintext[i] = 0x0; 
-		}
+	int requiredPlaintextLength = length;
+	while (requiredPlaintextLength % 16 != 0)
+		requiredPlaintextLength++;
+	return requiredPlaintextLength;
 }
 
 int main(int argc,char* argv[])
 {	
-	//unsigned char plaintext[] = {0x32,0x43,0xf6,0xa8,0x88,0x5a,0x30,0x8d,0x31,0x31,0x98,0xa2,0xe0,0x37,0x07,0x34};
-	
-	/*unsigned char plaintext[] =     {0x74,0x20,0x61,0x73,
-					     0x68,0x69,0x20,0x74,
-					     0x69,0x73,0x74,0x2e,
-					     0x73,0x20,0x65,0x2e};
-	*/
 
-	//unsigned char testArray[4][4] = {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
-	//unsigned char plaintext[] = "This is a test..";
-	//unsigned char key128[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	//A lot of print statements get called to demonstrate the output
 
-	//unsigned char plaintext[16] = {0x32,0x43,0xf6,0xa8,0x88,0x5a,0x30,0x8d,0x31,0x31,0x98,0xa2,0xe0,0x37,0x07,0x34};
-	//unsigned char key128[16] = {0x2b,0x7e,0x15,0x16,0x28,0xae,0xd2,0xa6,0xab,0xf7,0x15,0x88,0x09,0xcf,0x4f,0x3c};
-	
+
+
 	unsigned char plaintext[] = "EHN 410 practical 2";
-	unsigned char unpaddedKey128[] = "AES_encrypt";
-	
-	
-	int originalLength = strlen(plaintext);
-	int requiredLength = getRequiredLength(plaintext);
+	unsigned char key[] = "AES_encrypt";
 
-	unsigned char *paddedString = malloc(requiredLength + 1);
-	unsigned char *cyphertext = malloc(requiredLength + 1);
-	unsigned char *decryptedText = malloc(requiredLength + 1);
-	for (int i = 0; i < originalLength; i++)
+	//unsigned char plaintext[] = "aaaaaaaaaaaaaaaa";
+	//unsigned char key[] = "1111111111111111";
+	//unsigned char key[] = "111111111111111111111111";
+	//unsigned char key[] = "11111111111111111111111111111111";
+	int numBits = 128;
+	
+	//get original length and determine the required length 
+	int originalPlaintextLength = strlen(plaintext);
+	int requiredPlaintextLength = getrequiredLength(plaintext);
+
+	//make an array of the required length and copy the original 
+	unsigned char *paddedString = malloc(requiredPlaintextLength + 1);
+	for (int i = 0; i < originalPlaintextLength; i++)
 		paddedString[i] = plaintext[i];
-	for (int j = originalLength; j < requiredLength; j++)
+	//padding with zeros
+	for (int j = originalPlaintextLength; j < requiredPlaintextLength; j++)
 		paddedString[j] = 0x0;
 
-
-	printf("Complete plaintext:\n");
-	for (int i = 0; i < requiredLength; i++)
+	printf("Original plaintext:\n");
+	for (int i = 0; i < requiredPlaintextLength; i++)
 		printf("%c",paddedString[i]);
 	printf("\n");
 
-	unsigned char paddedKey128[200]; //large to prevent the odd stack smashing errors 
-	unsigned char expandedKeys128[11][4][4];
-	addPadding(unpaddedKey128,paddedKey128);
-	keyExpander128(paddedKey128,expandedKeys128);
+	//get original length and determine the required length 
+	int originalKeyLength = strlen(key);
+	int requiredKeyLength = numBits/8; // either 16, 24 or 32
 
-	int numBlocks = requiredLength/16;
+	//make an array of the required length and copy the original 
+	unsigned char *paddedKey = malloc(requiredKeyLength + 1);
+	for (int i = 0; i < originalKeyLength; i++)
+		paddedKey[i] = key[i];
+	//padding with zeros		
+	for (int j = originalKeyLength; j < requiredKeyLength; j++)
+		paddedKey[j] = 0x0;
 
+	//expand the key
+	unsigned char expandedKeys[15][4][4];
+	keyExpander(paddedKey,expandedKeys,numBits);
+
+	printf("\nOriginal key:\n");
+	for (int i = 0; i < requiredKeyLength; i++)
+		printf("%c",paddedKey[i]);
+	printf("\n");
+	//get the number of blocks the plaintext must be broken up into
+	int numBlocks = requiredPlaintextLength/16;
+
+	//make an array of the required length to store the encrypted version of all the padded plaintext
+	unsigned char *cyphertext = malloc(requiredPlaintextLength + 1);
 	printf("*******Encryption*******\n");
-	aesEncrypt(paddedString,expandedKeys128,numBlocks,cyphertext);
+	//call the encryption function
+	aesEncrypt(paddedString,expandedKeys,numBlocks,cyphertext,numBits);
 	printf("Complete Cyphertext\n");
-	for (int i = 0; i < requiredLength; i++)
+	for (int i = 0; i < requiredPlaintextLength; i++)
 		printf("%02x ",cyphertext[i]);
 	printf("\n");
-
+	//make an array of the required length to store the decrypted version of all the padded plaintext
+	unsigned char *decryptedText = malloc(requiredPlaintextLength + 1);
 	printf("*******Decryption*******\n");
-	aesDecrypt(cyphertext,expandedKeys128,numBlocks,decryptedText);
+	//call the decryption function
+	aesDecrypt(cyphertext,expandedKeys,numBlocks,decryptedText,numBits);
 	printf("Complete decryptedText\n");
-	for (int i = 0; i < requiredLength; i++)
+	for (int i = 0; i < requiredPlaintextLength; i++)
 		printf("%c",decryptedText[i]);
 	printf("\n");
 
 
-/*	for (int x = 0; x < 11; x++)
+	//print the expanded key
+	int numRounds;
+	if (numBits == 128)
+		numRounds = 11;
+	if (numBits == 192)
+		numRounds = 13;
+	if (numBits == 256)
+		numRounds = 15;
+	printf("\nKey expansion:\n");
+	for (int x = 0; x < numRounds; x++)
 	{
 		for (int y = 0; y < 4; y++)
 		{
 			for (int z = 0; z < 4; z++)
 			{
-				printf("%02x ",expandedKeys128[x][z][y]);
+				printf("%02x ",expandedKeys[x][z][y]);
 			}
 			
 		}
 		printf("\n");
 	}
-*/
+
 	return 0;
 }

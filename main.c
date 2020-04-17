@@ -300,10 +300,10 @@ void formatInputBlock(unsigned char state[4][4])
 
 }
 /**
- * @brief Sets state[0][0] as plaintext[0], state[1][0] as plaintext[1], etc.
+ * @brief Prepares a 16 byte plaintext string by turning it into a 4x4 AES state vector
  * 
- * @param plaintext A 16-char 1D array containing a string of plaintext
- * @param state A 4x4 array where the plaintext will be stored
+ * @param plaintext A 16 character 1D array containing a string of plaintext
+ * @param state A 4x4 array where the state vector will be stored
  * @return void
  */
 void prepareInput(unsigned char plaintext[16],unsigned char state[4][4])
@@ -312,7 +312,7 @@ void prepareInput(unsigned char plaintext[16],unsigned char state[4][4])
 	formatInputBlock(state);
 }
 /**
- * @brief Uses the values inside of the state vector as indexes to the sBox and substitutes correspondingly 
+ * @brief Uses the values inside of the state vector as indexes to the sBox array and substitutes accordingly 
  * 
  * @param state A 4x4 array where the state vector has been stored that must have substitutions performed
  * @return void
@@ -336,7 +336,7 @@ void substituteBytes(unsigned char state[4][4])
 }
 
 /**
- * @brief Uses the values inside of the state vector as indexes to the inverse sBox and substitutes correspondingly 
+ * @brief Uses the values inside of the state vector as indexes to the inverse sBox and substitutes accordingly 
  * 
  * @param state A 4x4 array where the state vector has been stored that must have invserse substitutions performed
  * @return void
@@ -459,8 +459,8 @@ void mixColumns(unsigned char state[4][4])
 	/*
 	[2][3][1][1]                                    [s00][s01][s02][s03]
 	[1][2][3][1]   which we want to multiply with   [s10][s11][s12][s13]
-        [1][1][2][3]                                    [s20][s21][s22][s23]
-	[3][1][1][2]			                [s30][s31][s32][s33]
+	[1][1][2][3]                                    [s20][s21][s22][s23]
+	[3][1][1][2]                                    [s30][s31][s32][s33]
 			                                    s = state
 	*/		
 	tempArray[0][0] = (multiply2[state[0][0]] ^ multiply3[state[1][0]] ^ state[2][0] ^ state[3][0]);
@@ -510,8 +510,8 @@ void inverseMixColumns(unsigned char state[4][4])
 	/*
 	[14][11][13][09]                                    [s00][s01][s02][s03]
 	[09][14][11][13]   which we want to multiply with   [s10][s11][s12][s13]
-        [13][09][14][11]                                    [s20][s21][s22][s23]
-	[11][13][09][14]			            [s30][s31][s32][s33]
+	[13][09][14][11]                                    [s20][s21][s22][s23]
+	[11][13][09][14]                                    [s30][s31][s32][s33]
                                                                   s = state
 	*/	
 	tempArray[0][0] = multiply14[state[0][0]] ^ multiply11[state[1][0]] ^ multiply13[state[2][0]] ^ multiply9[state[3][0]]; 
@@ -582,7 +582,7 @@ void coreKeyScheduler(unsigned char input4bytes[4], int counter)
 	
 }
 /**
- * @brief Expands a 16, 24 or 32 byte key into a 11, 13 or 15 keys depending on the numBits
+ * @brief Expands a single 16, 24 or 32-byte key into 11, 13 or 15 keys depending on the numBits
  *        
  * @param inputKey An input 1D array that can contain up to 32 bytes
  * @param expandedKeyArray An output array that can contain up to 15 4x4 byte keys
@@ -886,7 +886,7 @@ void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKe
 	//printf("\n");
 }
 /**
- * @brief Performs incryption on a plaintext string of arbitray length by breaking it into 16-byte blocks.
+ * @brief Performs incryption on a plaintext string of arbitrary length by breaking it into 16-byte blocks.
  *        
  * @param paddedString A string padded with zeros to be 16 bytes long
  * @param expandedKeys An array containing a round key for each round of encryption
@@ -962,7 +962,7 @@ void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys[15][4][4],
 }
 
 /**
- * @brief Gets the required length of a string so that the length is a multiple of 16
+ * @brief Gets the required length of a string for the length to become a multiple of 16
  *        
  * @param plaintext Any character string 
  * @return void

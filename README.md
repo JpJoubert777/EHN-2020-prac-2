@@ -9,13 +9,21 @@ The command after this has the following format:
 ./main <e/d> <ECB/CBC/CFB> <len> <textString> -key <keyString> -go
 
 Parameters:
+
 • e encryption
+
 • d decryption
+
 • ECB for electronic codebook
+
 • CBC for cypher block chaining
+
 • CFB for cypher feedback
+
 • <len> either 128, 192 or 256
+  
 • <textString> for text to decrypt
+  
 • -key for the password
 
 Example usage:

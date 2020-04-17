@@ -24,3 +24,5 @@ Where:
 Exclude quotation marks in your input. Here is an example input copied directly from the terminal:
 
 ./main e ECB 128 EHN 410 practical 2 -key AES_encrypt -go
+
+After this, you would hit enter.

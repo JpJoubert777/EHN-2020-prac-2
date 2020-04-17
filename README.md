@@ -2,6 +2,7 @@
 
 10 April group 20
 
+Please open this readme in a text editor rather than reading from gitHub. Some text doesn't show on github for some reason.
 Open a terminal in the same folder as the source files.
 Type "make" and hit enter.
 The command after this has the following format:

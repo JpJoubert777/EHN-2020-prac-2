@@ -1,6 +1,7 @@
 # EHN-2020-prac-2
 
 10 April group 20
+
 Please download and open this readme.md in a text editor as github is hiding some of the parameters for some reason.
 
 Open a terminal in the same folder as the source files.

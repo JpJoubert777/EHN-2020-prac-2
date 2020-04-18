@@ -16,7 +16,7 @@ Parameters:
 
 • d decryption
 
-• ECB for electronic codebook
+• ECB for electronic codebook. This means PURE AES functionality without any CFB or CBC.
 
 • CBC for cypher block chaining
 

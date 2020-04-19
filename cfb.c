@@ -5,26 +5,6 @@
 #include "shiftRegister.h"
 #include "aes.h"
 
-// /**
-//  * @brief loads IV char array into ShiftRegister struct. Includes padding with ' ' on the left where size of IV is below blockSize
-//  * NOTE: prints error and returns NULL if ivSize > blockSize
-//  * @param iv Initialization Vector provided to load into ShiftRegister
-//  * @param ivSize size of the iv char array
-//  * @param blockSize size of the block to be used
-//  * @return ShiftRegister* created ShiftRegister struct object init with IV
-//  */
-// ShiftRegister* initShiftRegister(char* iv, int ivSize, int blockSize) {
-//     if (ivSize > blockSize) {
-//         fprintf(stderr, "Initia Vector size > Block size\n");
-//         return NULL;
-//     }
-//     ShiftRegister *sr = (ShiftRegister*)calloc(1, sizeof(ShiftRegister));
-
-//     for (int i = 0; i < ivSize; i++, addTail(sr, iv[i]));
-//     for (int i = 0; i < blockSize - ivSize; i++, addTail(sr, 0)); // padding the right with zeros
-
-//     return sr;    
-// }
 
 /**
  * @brief Utility for xor operation across two arrays(one and two). Result is loaded to output.
@@ -57,22 +37,14 @@ void leftShift(char *sr, int size, int sl, char *fill = NULL) {
         for (int i = sl; i < size; sr[i++] = 0);
 }
 
-// /**
-//  * 
-//  * @brief 
-//  * NOTE: pt and ct arrays to be of same size
-//  * 
-//  * @param pt plain text = input
-//  * @param ct cipher text = output 
-//  * @param sr shiftRegister = should be loaded with IV and padded with spaces to the left for the first iteration. Should be provided unaltered for each subsequent iteration.
-//  * @param blockSize number of bytes in block
-//  * @param sl stream length = number of bits per stream
-//  */
-// void eCFB(char *bc, char* pt, char* ct, char* sr, int size, int sl) {
-//     ArrayXor(bc, pt, ct, sl);
-//     leftShift(sr, size, sl, ct);
-// }
-
+/**
+ * @brief Utility function to pad zeros to the right. Copies src to dest and pads the remaining of dest with zeros.
+ * 
+ * @param src unpadded array
+ * @param dest padded array
+ * @param srcSize size of src array
+ * @param destSize size of dest array.
+ */
 void padRight (char* src, char* dest, int srcSize, int destSize) {
     int i = 0;
     for (; i < srcSize; dest[i] = src[i++]);

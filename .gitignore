@@ -1,2 +1,5 @@
 # we want to ignore the compiled exes
 *.exe
+
+# leave any testing driver code in local repo
+test*.c

@@ -3,7 +3,7 @@
 
 void ArrayXor(char *one, char *two, char *output, int size);
 
-void leftShift(char *sr, int size, int sl, char *fill = NULL);
+void leftShift(char *sr, int size, int sl, char *fill);
 
 void padRight (char* src, char* dest, int srcSize, int destSize);
 

@@ -61,7 +61,7 @@ void padRight (char* src, char* dest, int srcSize, int destSize) {
  * @param key unpadded key to be used in the AES algorithm
  * @param sr shift register to be used as input to the AES algorithm
  * @param currKeySize unpadded size of the given key
- * @param sl stream length = sizes of streams to the divide the block into
+ * @param sl stream length(bytes) = sizes of streams to the divide the block into
  * @param inputSize number of bytes in the current input - does not have to be a multiple of sl - this case is handled.
  * @param blockSize number of bytes per block
  * @param numBits AES key size mode
@@ -75,14 +75,14 @@ void CFB(char *input, char *output, char *key, char *sr, int currKeySize, int sl
     if (inputSize % sl != 0) 
         iters++;
 
-    for (i = 0; i < iters; i++) { // splits the block into streams and processes till block end
+    for (int i = 0; i < iters; i++) { // splits the block into streams and processes till block end
         if (i == iters-1)
             sl = inputSize % sl; // so that input creates same sized output without padding needed when last stream isn't a multiple of sl
         char expandedKey[15][4][4];
         keyExpander(fullKey, expandedKey, numBits);
         char bc[blockSize];
         for (int j = 0; j < blockSize; bc[i] = sr[i++]); // copy shiftRegister to blockCipher
-        applyEncryinputionRounds(bc, expandedKey, numBits);
+        applyEncryinptionRounds(bc, expandedKey, numBits);
         // now bc will be altered by the AES but sr will remain as is
         ArrayXor(bc, input, output, sl);
         leftShift(sr, blockSize, sl, output);

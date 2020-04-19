@@ -1,0 +1,2 @@
+# we want to ignore the compiled exes
+*.exe

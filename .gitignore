@@ -2,4 +2,4 @@
 *.exe
 
 # leave any testing driver code in local repo
-test*.c
+test*

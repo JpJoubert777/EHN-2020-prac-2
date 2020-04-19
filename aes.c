@@ -4,7 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-bool showSteps = true;
+
+//NOTE: showSteps to be true to see how the AES algorithm would work
+bool showSteps = false;
 // Array containing the Rijndael S-box used in the core key sheduler
 //source: https://cryptography.fandom.com/wiki/Rijndael_S-box
 unsigned char sBox[256] =  

@@ -6,6 +6,7 @@
 #include "cfb.h"
 
 
+
 /**
  * @brief Utility for xor operation across two arrays(one and two). Result is loaded to output.
  * NOTE: all arrays to be at least of length size
@@ -25,18 +26,17 @@ void ArrayXor(char *one, char *two, char *output, int size) {
  * @param sr shiftRegister
  * @param size size of the shiftRegister sr
  * @param sl shiftLeft = number of bytes to shift left
- * @param fill fill in characters into the new space
+ * @param fill fill in characters into the new space - use NULL if no fill array
  */
-void leftShift(char *sr, int size, int sl, char *fill = NULL) {
-    for (int i = 0, int j = sl; j < size; i++, j++) {
-        sr[i] = sr[j];
-    }
+void leftShift(char *sr, int size, int sl, char *fill) {
+    int i = 0;
+    for (int j = sl; j < size; sr[i++] = sr[j++]);
+        
     if (fill != NULL) 
-        for (int i = sl; i < size; sr[i++] = *(fill++));
+        for (; i < size; sr[i++] = *(fill++));
     else 
-        for (int i = sl; i < size; sr[i++] = 0);
+        for (; i < size; sr[i++] = 0);
 }
-
 /**
  * @brief Utility function to pad zeros to the right. Copies src to dest and pads the remaining of dest with zeros.
  * 
@@ -47,7 +47,7 @@ void leftShift(char *sr, int size, int sl, char *fill = NULL) {
  */
 void padRight (char* src, char* dest, int srcSize, int destSize) {
     int i = 0;
-    for (; i < srcSize; dest[i] = src[i++]);
+    for (; i < srcSize; dest[i++] = src[i]);
     for (; i < destSize; dest[i++] = 0); // pad with zeros to the right
 }
 
@@ -56,6 +56,7 @@ void padRight (char* src, char* dest, int srcSize, int destSize) {
  * For Encryption: input = pt, output = ct
  * For Decryption: input = ct, output = pt
  * 
+ * @param mode encryption if 1 and decryption if 0
  * @param input input array = input to the CFB encryption algorithm (E and D)
  * @param output output array = stores the CFB result (E and D)
  * @param key unpadded key to be used in the AES algorithm
@@ -66,26 +67,40 @@ void padRight (char* src, char* dest, int srcSize, int destSize) {
  * @param blockSize number of bytes per block
  * @param numBits AES key size mode
  */
-void CFB(char *input, char *output, char *key, char *sr, int currKeySize, int sl, const int inputSize, const int blockSize, const int numBits) {
+void CFB(uint mode, char *input, char *output, char *key, char *sr, int currKeySize, int sl, const int inputSize, const int blockSize, const int numBits) {
     const int fullKeySize = 32;
     char fullKey[fullKeySize];
-    padRight(key, fullKey, currKeySize, fullKeySize);
+    padRight(key, fullKey, currKeySize, fullKeySize); // pad the key to a full 32 bytes to feed into AES key expander
+
 
     int iters = inputSize/sl;
     if (inputSize % sl != 0) 
         iters++;
 
+    char bc[blockSize];
+    
+    
     for (int i = 0; i < iters; i++) { // splits the block into streams and processes till block end
-        if (i == iters-1)
-            sl = inputSize % sl; // so that input creates same sized output without padding needed when last stream isn't a multiple of sl
-        char expandedKey[15][4][4];
+        if (i == iters-1 && inputSize < sl)
+            sl = inputSize % sl; // so that input creates same sized output without padding needed when last stream isn't a multiple of sl       
+
+        for (int j = 0; j < blockSize; bc[j++] = sr[j]); // copy shiftRegister to blockCipher
+
+        unsigned char expandedKey[15][4][4];
         keyExpander(fullKey, expandedKey, numBits);
-        char bc[blockSize];
-        for (int j = 0; j < blockSize; bc[i] = sr[i++]); // copy shiftRegister to blockCipher
-        applyEncryinptionRounds(bc, expandedKey, numBits);
+        applyEncryptionRounds(bc, expandedKey, numBits);
+    
         // now bc will be altered by the AES but sr will remain as is
-        ArrayXor(bc, input, output, sl);
-        leftShift(sr, blockSize, sl, output);
+        if (mode) { // encryption mode
+            ArrayXor(bc, input, output, sl);    
+            leftShift(sr, blockSize, sl, output);
+        }
+        else { // decryption mode
+            leftShift(sr, blockSize, sl, input);
+            ArrayXor(bc, input, output, sl);    
+        }
+        
+        
         output += sl;
         input += sl;
     }

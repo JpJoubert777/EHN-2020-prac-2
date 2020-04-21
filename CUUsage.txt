@@ -24,4 +24,7 @@ for files:
 	char bc[blockSize];
 	int numBytes = 0;
 	do {
+		numBytes = getNextBlock(bc, blockSize); 
+		// insert block cipher function call here
+		writeBlock(outputArray, NULL, numBytes or blockSize)
 	}

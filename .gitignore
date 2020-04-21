@@ -3,3 +3,4 @@
 
 # leave any testing driver code in local repo
 test*
+!cfbdemo_DONTRUN

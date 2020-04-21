@@ -4,35 +4,40 @@
 #include <time.h>
 #include "aes.c"
 #include "cbc.h"
+#include "cipherUtils.c"
 
-int main()
-{
-	char * UserIV = "1234567890123456";
-	char * Userplaintext = "YoMaSePoesNaai12";
-	char * Userkey = "!@#$%";
+// int main()
+// {
+// 	char * UserIV = "1234567890123456";
+// 	char * Userplaintext = "EnjoyThisEHN";
+// 	char * Userkey = "!@#$%";
 
-	
-
-	char ciphertext [16];
-	char newPlain [16];
+// 	char ciphertext [16];
+// 	char newPlain [16];
     
+// 	CBC_encrypt(Userplaintext,UserIV,Userkey, 16, 16, 128, ciphertext);
 
-	CBC_encrypt(Userplaintext,UserIV,Userkey, 16, 16, 128, ciphertext);
+//     CBC_decrypt(ciphertext,UserIV,Userkey, 16, 16, 128, newPlain);
 
-    CBC_decrypt(ciphertext,UserIV,Userkey, 16, 16, 128, newPlain);
+//     for (int i = 0; i < 16; i++)
+//     {
+//     	printf("%c", ciphertext[i]);
+//     }
+//     printf("%s\n", "");
+//     for (int i = 0; i < 16; i++)
+//     {
+//     	printf("%c", newPlain[i]);
+//     }
+// }
 
-    for (int i = 0; i < 16; i++)
-    {
-    	printf("%c", ciphertext[i]);
-    }
-    printf("%s\n", "");
-    for (int i = 0; i < 16; i++)
-    {
-    	printf("%c", newPlain[i]);
-    }
-
-}
-
+/**
+ * @brief      A bitwise XOR of string 1 and string 2 and stored in string 3
+ *
+ * @param      str1  The string 1
+ * @param      str2  The string 2
+ * @param      str3  The string 3
+ * @param[in]  size  The size of the strings
+ */
 void XOR(char* str1, char* str2, char* str3, int size)
 {
 	for (int i = 0; i < size; i++)
@@ -41,76 +46,76 @@ void XOR(char* str1, char* str2, char* str3, int size)
 	}
 } 
 
-void padRight (char* src, char* dest, int srcSize, int destSize) {
-    int i = 0;
-    for (; i < srcSize; dest[i++] = src[i]);
-    for (; i < destSize; dest[i++] = 0); // pad with zeros to the right
-}
 
+
+/**
+ * @brief      Performs the Cipher Block Chaining algorithm with AES as encryption mode
+ *
+ * @param      Userplaintext  The plaintext block
+ * @param      UserIV         The initialisation vector
+ * @param      Userkey        The key
+ * @param[in]  curKeySize     The current key size
+ * @param[in]  inputSize      The input size
+ * @param[in]  numBits        The number bits
+ * @param      ciphertext     The final ciphertext storing output
+ */
 void CBC_encrypt(char* Userplaintext, char* UserIV, char* Userkey, const int curKeySize, const int inputSize, const int numBits, char * ciphertext)
 {
-	//const int fullKeySize = 32;
-	//char fullKey[fullKeySize];
-	char * plaintext [16];
-	char * key [32];
-	char * IV [16];
+	char * plaintext [16]; //the size per block (16 bytes), will be padded if neccessary
+	char * key [32]; //the max key size (32 bytes), also padded if neccessary
+	char * IV [16];//the max IV size (16 bytes), will be padded if neccessary
 
 	padRight (Userplaintext,plaintext,strlen(Userplaintext), 16);
 	padRight (Userkey,key,strlen(Userkey), 32);
 	padRight(UserIV, IV, strlen(UserIV), 16);
 
-	unsigned char expandedKey[15][4][4];
+	unsigned char expandedKey[15][4][4];// to be passed to AES algorithm
 
-	//pad whatever needs to be padded
-
-	char first [inputSize];
-
-	//printf("%s\n", " ");
+	char first [inputSize]; //stores output of XOR algorithm
 	XOR(plaintext, IV, first, inputSize);
 
-	//printf("%s\n", " ");
 	keyExpander(key, expandedKey, numBits);
-	applyEncryptionRounds(first, expandedKey, numBits);
+	applyEncryptionRounds(first, expandedKey, numBits);//calls AES encryption alogorithm
 
 	for (int i = 0; i < 16; i++)
     {
-    	ciphertext[i] = first[i];
-    	printf("%c", first[i]);
+    	ciphertext[i] = first[i];//Strore output of alogorithm in cihpertext
     }
-	//ciphertext = first;
-	printf("%s\n", " ");
-
+	
 
 }
 
+
+
+/**
+ * @brief      Performs the Cipher Block Chaining algorithm with AES as decryption mode
+ *
+ * @param      ciphertext  The ciphertext to be decrypted
+ * @param      UserIV      The initialisation vector
+ * @param      Userkey     The key
+ * @param[in]  curKeySize  The current key size
+ * @param[in]  inputSize   The input size
+ * @param[in]  numBits     The number of bits
+ * @param      newPlain    The final plaintext storing output
+ */
 void CBC_decrypt(char* ciphertext, char* UserIV, char* Userkey, const int curKeySize, const int inputSize, const int numBits, char* newPlain)
 {
-	//const int fullKeySize = 32;
-	//unsigned char fullKey[fullKeySize];
-	char * key [32];
-	char * IV [16];
+	char * key [32];//The key to be used
+	char * IV [16];//the initialisation vector
 
-	padRight (Userkey,key,strlen(Userkey), 32);
-	padRight(UserIV, IV, strlen(UserIV), 16);
+	padRight (Userkey,key,strlen(Userkey), 32);//padding for correct size
+	padRight(UserIV, IV, strlen(UserIV), 16);//padding for correct size
 
-	unsigned char expandedKey[15][4][4];
-
-	//pad whatever needs to be padded
-
+	unsigned char expandedKey[15][4][4];// to be passed to AES algorithm
 	keyExpander(key, expandedKey, numBits);
 	applyDecryptionRounds(ciphertext, expandedKey, numBits);
 
 
-	char first [inputSize];
+	char first [inputSize];//stores output of XOR alogrithm
 	XOR(ciphertext, IV, first, inputSize);
 
 	for (int i = 0; i < 16; i++)
     {
-    	newPlain[i] = first[i];
-    	//printf("%c", newPlain[i]);
+    	newPlain[i] = first[i];//store output of algorithm in newPlain 
     }
-	
-
-	printf("%s\n", " ");
-
 }

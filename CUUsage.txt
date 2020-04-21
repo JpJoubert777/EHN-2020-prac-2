@@ -1,0 +1,27 @@
+for strings:
+	
+	addString(ptr, size of string);
+	char bc[blockSize];
+	int numBytes = 0;
+	do {
+		numBytes = getNextBlock(bc, blockSize); 
+		// insert block cipher function call here
+
+	} while(numBytes == blockSize);
+	// numbytes returns how many bytes from the full string were read into bc
+	// this number is useful to determine if a block should be padded before sending into your algorithm
+
+	// NOTE: for strings, an output array that will hold the output of the current block cipher block needs to be maintained
+	// For this just increase the char pointer to the output array by numBytes or blockSize(depends on whether algorithm is block or stream based)
+
+for files:
+	// there will be two files - a read file and a write file
+	// read file should already be created and contain data, otherwise useless
+	// write file will be created if it doesn't already exist. just specify the desired name in the path
+	char *rFile = "<path to the read file>";
+	char *wFile = "<path to the write file>";
+	addFiles(rFile, wFile);
+	char bc[blockSize];
+	int numBytes = 0;
+	do {
+	}

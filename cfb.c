@@ -4,55 +4,11 @@
 #include <errno.h>
 #include "aes.h"
 #include "cfb.h"
-
+#include "cipherUtils.h"
 
 
 /**
- * @brief Utility for xor operation across two arrays(one and two). Result is loaded to output.
- * NOTE: all arrays to be at least of length size
- * @param one 
- * @param two 
- * @param output 
- * @param size size of arrays in bytes
- */
-void ArrayXor(char *one, char *two, char *output, int size) {
-    for (int i = 0; i < size; i++) 
-        *(output++) = *(one++) ^ *(two++); // note that pointers one, two and output will remain unchanged when function call returns but data will change
-}
-
-/**
- * @brief shifts the shiftRegister sr to the left by sl bytes. fills in the new space at the end with fill if fill doesn't point to NULL
- * 
- * @param sr shiftRegister
- * @param size size of the shiftRegister sr
- * @param sl shiftLeft = number of bytes to shift left
- * @param fill fill in characters into the new space - use NULL if no fill array
- */
-void leftShift(char *sr, int size, int sl, char *fill) {
-    int i = 0;
-    for (int j = sl; j < size; sr[i++] = sr[j++]);
-        
-    if (fill != NULL) 
-        for (; i < size; sr[i++] = *(fill++));
-    else 
-        for (; i < size; sr[i++] = 0);
-}
-/**
- * @brief Utility function to pad zeros to the right. Copies src to dest and pads the remaining of dest with zeros.
- * 
- * @param src unpadded array
- * @param dest padded array
- * @param srcSize size of src array
- * @param destSize size of dest array.
- */
-void padRight (char* src, char* dest, int srcSize, int destSize) {
-    int i = 0;
-    for (; i < srcSize; dest[i++] = src[i]);
-    for (; i < destSize; dest[i++] = 0); // pad with zeros to the right
-}
-
-/**
- * @brief AES encryption in CFB mode. Works for both encryption and decryption.
+ * @brief AES encryption in CFB mode. Works for both encryption and decryption depending on the mode.
  * For Encryption: input = pt, output = ct
  * For Decryption: input = ct, output = pt
  * 

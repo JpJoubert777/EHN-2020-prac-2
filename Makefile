@@ -9,11 +9,14 @@ cfb.o:	cfb.c cfb.h
 shiftRegister.o: shiftRegister.c
 	gcc -c shiftRegister.c
 
+cipherUtils.o: cipherUtils.c cipherUtils.h
+	gcc -c cipherUtils.c
+
 testcfb.o: testcfb.c
 	gcc -c testcfb.c
 
-testcfb: testcfb.o aes.o cfb.o 
-	gcc -o testcfb testcfb.o aes.o cfb.o 
+testcfb: testcfb.o cipherUtils.o aes.o cfb.o 
+	gcc -o testcfb testcfb.o cipherUtils.o aes.o cfb.o 
 
 clean:
 	rm *.o $(objects) 

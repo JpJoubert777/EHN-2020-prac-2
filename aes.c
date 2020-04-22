@@ -795,76 +795,44 @@ void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKe
 	//printf("\n");
 }
 
-void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys[15][4][4],int numBlocks,int numbits)
+void ECB(unsigned char unPaddedString[16],unsigned char encryptedString[16],unsigned char key[32],int currKeySize,int cbl,int numBits)
 {
-	//for the required number of blocks
-	for (int x = 0; x < numBlocks; x++)
-	{
-		//create the block and copy the string to it
-		unsigned char block[16];
-		//printf("Block %d\n",x);
-		//printf("Plaintext:\n");
-		for (int y = 0; y < 16; y++)
-		{
-				block[y] = paddedString[y + 16*x];
-		}
-		//print the block
-		//for (int z = 0; z < 16; z++)
-		//	printf("%c",block[z]);
-		//encrypt the block
-		applyEncryptionRounds(block,expandedKeys,numbits);
-		//copy output
-		printf("cyphertext for this block:\n");
-		for (int z = 0; z < 16; z++)
-			printf("%02x ",block[z]);
-		printf("\n");
-	
-		for (int y = 0; y < 16; y++)
-		{
-				paddedString[y + 16*x] = block[y];
-				
-		}
-	}
+	showSteps = true;
+	printf("unpadded plaintext for this block:\n");
+	for (int i = 0; i < 16; i++)	
+		printf("%c",unPaddedString[i]);
+	printf("\n");
+	//copy unPaddedString into encryptedString
+	for (int i = 0; i < cbl; i++)
+		encryptedString[i] = unPaddedString[i];//copying
+
+	//check if padding is needed for plaintext
+	int blockSize = 16;
+	if (cbl != blockSize)
+		for (int i = cbl; i < blockSize; i++)
+			encryptedString[i] = 0x0;//padding
+
+	printf("Padded plaintext for this block:\n");
+	for (int i = 0; i < 16; i++)	
+		printf("%c",encryptedString[i]);
+	printf("\n");
+	//check if padding is needed for key
+	int requiredKeyLength = numBits/8; // either 16, 24 or 32
+	if (currKeySize < requiredKeyLength)
+		for(int i = currKeySize; i < requiredKeyLength; i++)
+			key[i] = 0x0;//padding
+
+	//key expansion and application of encryption rounds
+	unsigned char expandedKeys[15][4][4];
+	keyExpander(key,expandedKeys,numBits);
+	applyEncryptionRounds(encryptedString,expandedKeys,numBits);
+
+	//print output
+	printf("cyphertext for this block:\n");
+		for (int i = 0; i < 16; i++)
+			printf("%02x ",encryptedString[i]);
+	printf("\n");
+	showSteps = false;
 
 }
-
-void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys[15][4][4],int numBlocks,int numbits)
-{
-	//for the required number of blocks
-	for (int x = 0; x < numBlocks; x++)
-	{
-		//create the block and copy the string to it
-		unsigned char block[16];
-		for (int y = 0; y < 16; y++)
-		{
-				block[y] = cyphertext[y + 16*x];
-		}
-		//print the block
-		//printf("Block %d\n",x);
-		//printf("Cyphertext:\n");
-		//for (int z = 0; z < 16; z++)
-		//	printf("%02x ",block[z]);
-		//printf("\n");
-		//decrypt the block
-		applyDecryptionRounds(block,expandedKeys,numbits);
-		//printf("\n");
-		//copy output
-		for (int y = 0; y < 16; y++)
-		{
-				cyphertext[y + 16*x] = block[y];
-		}
-	}
-}
-
-int getrequiredLength(int length)
-{
-	//just keep counting up until length mod 16 = 0, then return that length
-	int requiredPlaintextLength = length;
-	while (requiredPlaintextLength % 16 != 0)
-		requiredPlaintextLength++;
-	return requiredPlaintextLength;
-}
-
-
-
 

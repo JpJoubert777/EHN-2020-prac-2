@@ -261,6 +261,7 @@ int main(int argc,char* argv[]) {
                 break;
             case mECB:
                 //JP
+		ECB(iblock,oblock,key,currKeySize,cbl,numBits);
                 break;
             default:
                 break;

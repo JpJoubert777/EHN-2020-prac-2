@@ -158,42 +158,17 @@ void applyEncryptionRounds(unsigned char plaintext[16],unsigned char expandedKey
  */
 void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKeys[15][4][4], int numBits);
 /**
- * @brief Performs incryption on a plaintext string of arbitrary length by breaking it into 16-byte blocks.
+ * @brief Performs encryption on a plaintext string of arbitrary length by breaking it into 16-byte blocks.
  *        
- * @param paddedString A string padded with zeros to be 16 bytes long
- * @param expandedKeys An array containing a round key for each round of encryption
- * @param numBlocks An integer indicating how many blocks will be encrypted
- * @param cyphertext An output array that will contain the cyphertext
+ * @param unPaddedString An input string not padded with zeros
+ * @param encryptedString The output encrypted string
+ * @param key A key that will be expanded based on numBits
+ * @param currKeySize An integer that indicates how many characters are actually present in the key array
+ * @param cbl An integer that indicates how many characters are actually present in the unPaddedString array
  * @param numBits An integer indicating how many bits the key should use
  * @return void
  */
-void aesEncrypt(unsigned char paddedString[],unsigned char expandedKeys[15][4][4],int numBlocks,int numbits);
-/**
- * @brief Performs decryption on a cyphertext string of arbitray length by breaking it into 16-byte blocks.
- *        
- * @param cyphertext A string containing encrypted characters
- * @param expandedKeys An array containing a round key for each round of encryption
- * @param numBlocks An integer indicating how many blocks will be decrypted
- * @param plaintext An output array that will contain the plaintext
- * @param numBits An integer indicating how many bits the key should use
- * @return void
- */
-void aesDecrypt(unsigned char cyphertext[],unsigned char expandedKeys[15][4][4],int numBlocks,int numbits);
-/**
- * @brief Gets the required length of a string for the length to become a multiple of 16
- *        
- * @param plaintext Any character string 
- * @return void
- */
-int getrequiredLength(int length);
-
-
-
-
-
-
-
-
+void ECB(unsigned char unPaddedString[16],unsigned char encryptedString[16],unsigned char key[32],int currKeySize,int cbl,int numBits);
 
 
 

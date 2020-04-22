@@ -729,7 +729,7 @@ void applyEncryptionRounds(unsigned char plaintext[16],unsigned char expandedKey
 			index++;
 		}
 			
-	printf("\n");
+	// printf("\n");
 }
 
 void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKeys[15][4][4], int numBits)

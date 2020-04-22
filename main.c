@@ -68,7 +68,8 @@ int main(int argc,char* argv[]) {
 
     int c;
 
-    int textSize = 0;
+    int textSize = 0; // length of text
+    int fullSize = 0; // full size will be the length of text padded to be a multiple of the blocksize
     int numBits = 0;
     int streamlen = 0;
     const int blockSize = 16;
@@ -78,7 +79,8 @@ int main(int argc,char* argv[]) {
     char *iv = NULL;
     char *key = NULL;
     char *text = NULL;
-    // char *fullOutput = NULL; // This will store the full output to the input text if required
+    char *fullOutput = NULL; // This will store the full output to the input text if required
+    char *outputtrav = fullOutput;
     char *iFile = NULL, *oFile = NULL;
 
     int cfbflg = 0, cbcflg = 0, ecbflg = 0, nbflg = 0;
@@ -184,7 +186,6 @@ int main(int argc,char* argv[]) {
                 printError("Invalid command!");
                 break;
         }
-
     
     }
 
@@ -240,8 +241,11 @@ int main(int argc,char* argv[]) {
     }
     else {
         textSize = strlen(text);
+        fullSize = textSize + blockSize - (textSize%blockSize);
+        // printf("%i %i", textSize, fullSize);
         addString(text, textSize);
-        // fullOutput = calloc((textSize+blockSize-1)/blockSize, sizeof(char));
+        fullOutput = (char *)calloc(fullSize, sizeof(char)); // fullOutput needs to be used for output so this pointer should hold the value of the array beginning
+        outputtrav = fullOutput; //outputtrav will be incremented to point to the beginning of the current block
     }
    
     
@@ -280,15 +284,30 @@ int main(int argc,char* argv[]) {
 
         int lenPrint = (aesMode == mCFB) ? cbl : blockSize;
 
-        if (aesMode != mECB && inputMode == String ) {
+        if (inputMode == String) {
             for(int i = 0; i < lenPrint; i++)
-                printf("%02x ", (unsigned char)oblock[i]); // flushes out the current e/d block out to terminal
+                *(outputtrav++) = oblock[i];
         }
         else if (inputMode == File)
             writeBlock(oblock, NULL, lenPrint);
        
     } while(cbl == blockSize); // no blocks remaining if cbl != blocksize
     
+    if (inputMode == String) {
+        int lenPrint = (aesMode == mCFB) ? textSize : fullSize;
+        for (int i = 0; i < lenPrint; i++) {
+            if (i%blockSize == 0)
+                printf("\n");
+            printf("%02x ", (unsigned char)fullOutput[i]);
+        }
+            
+        printf("\n");
+
+        if (fullOutput)
+            free(fullOutput);
+    }
+    
+
     printf("\n%s operation has finished.\n\n", (edflg == 1) ? "Encryption" : "Decryption");
     
 

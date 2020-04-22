@@ -20,7 +20,7 @@ int addFiles(char *input, char *output) {
     
     rFile = fopen(input, "r");
     if (rFile == NULL) {
-        fprintf(stderr, "Could not open %s or File not found", input);
+        fprintf(stderr, "Could not open %s or File not found\n", input);
         return 0;
     }    
     wFile = fopen(output, "w+");

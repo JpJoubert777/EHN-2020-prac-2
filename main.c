@@ -1,238 +1,282 @@
 /**
  * @file main.c
- * @author Jp Joubert (jpemail777@gmail.com)
- * @brief main file
- * @version 1
- * @date 2020-04-13
+ * @author Vishal Thalla
+ * @brief 
+ * @version 0.1
+ * @date 2020-04-22
  * 
+ * @copyright Copyright (c) 2020
  * 
  */
-/* Headers */
-#include "aes.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-int main(int argc,char* argv[])
-{	
-
-	
-	//A lot of print statements get called to demonstrate the output
-
-	//for (int n = 0; n < argc; n++)
-	//	printf("%d -->%s\n",n,argv[n]);
+#include <getopt.h> // for long command line args
+#include "aes.h"
+#include "cfb.h"
+#include "cbc.h"
+#include "cipherUtils.h"
 
 
-/*
+void printUsage() {
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "files: -e/d [-cbc|-cfb|-ecb] <len> -fi <input file> -fo <encrypted file> -key <password> -iv <initialization vector>\n");
+    fprintf(stderr, "text: [-e|-d] [-cbc|-cfb|-ecb] <len> -t <text> -key <password> -iv <initialization vector> (-streamlen <len>)\n");
+    fprintf(stderr, "use -h for help\n");
+    fprintf(stderr, "\n");
+}
 
-	./main e ECB 128 EHN 410 practical 2 -key AES_encrypt -go
+void printError(char *message) {
+    fprintf(stderr, "%s See Usage.\n", message);
+    printUsage();
+    exit(0);
+}
 
-	0 -->./main
-	1 -->e		encrypt
-	2 -->ECB	use ECB
-	3 -->128	use 128 bits
-	4 -->EHN	plaintext
-	5 -->410	plaintext
-	6 -->practical	plaintext
-	7 -->2		plaintext
-	8 -->-key	key delimeter command preceding the key
-	9 -->AES_encrypt 
-	
-	note that the plaintext and key can be one word or multiple words, the code will figure it out
-	-go indicates the end of the entire command line
-*/	
-	int numBits = atoi(argv[3]);
-	//for (int n = 0; n < strlen(argv[3]); n++)
-	//	printf("char[%d] = %c\n",n,argv[3][n]);
+void printHelp() {
+    
+    printUsage();
+    fprintf(stderr, "-e\t\t\tencryption\n");
+    fprintf(stderr, "-d\t\t\tdecryption\n");
+    fprintf(stderr, "-cbc <len>\t\tcbc encryption/decryption\n");
+    fprintf(stderr, "-cfb <len>\t\tcfb encryption/decryption\n");
+    fprintf(stderr, "-ecb <len>\t\tecb encryption/decryption\n");
+    fprintf(stderr, "<len>\t\t\t128, 192 or 256\n");
+    fprintf(stderr, "-t\t\t\t<text to process>\n");
+    fprintf(stderr, "-key\t\t\t<password>\n");
+    fprintf(stderr, "-fi\t\t\t<input file>\n");
+    fprintf(stderr, "-fo\t\t\t<output file>\n");
+    fprintf(stderr, "-fo\t\t\t<output file>\n");
+    fprintf(stderr, "-streamlen <len>\tlength of the stream (for cfb: either 8, 64 or 128)\n");
+    fprintf(stderr, "-h\t\t\thelp\n");
+    // fprintf(stderr, "NOTE: Pure AES ECB mode is run by default if -cbc/cfb not specified\n");
+    fprintf(stderr, "\n");
+    exit(0);
+
+}
+
+int main(int argc,char* argv[]) {
+
+    
+
+    // enum {Encryption, Decryption} edMode = Encryption;
+
+    enum {mECB, mCFB, mCBC} aesMode = mECB;
+
+    enum {File, String} inputMode = String;
+
+    int c;
+
+    int textSize = 0;
+    int numBits = 0;
+    int streamlen = 0;
+    const int blockSize = 16;
+
+    char iblock[blockSize]; // will store the current read block for each iteration
+    char oblock[blockSize]; // will store the current write block for each iteration
+    char *iv = NULL;
+    char *key = NULL;
+    char *text = NULL;
+    // char *fullOutput = NULL; // This will store the full output to the input text if required
+    char *iFile = NULL, *oFile = NULL;
+
+    int cfbflg = 0, cbcflg = 0, ecbflg = 0, nbflg = 0;
+    static int edflg;
+    static int hflg;
 
 
-	//count how many characters are in the plaintext
-	int charIterator = 0;
-	int commandIterator = 4; //plaintext always starts with 4th word in the command line
-	int wordCount = 0;
-	int charCount = 0;	
-	while (1)
-	{
-		if (argv[commandIterator][charIterator] == '-')
-			break;
-		//printf("char[%d] = %c charCount = %d\n",charIterator,argv[commandIterator][charIterator],charCount);
-		charIterator++;
-		charCount++;
-		if (argv[commandIterator][charIterator] == '\0')
-		{
-			commandIterator++;
-			wordCount++;
-			charIterator = 0;
-		}
-	}
-	//add spaces based on how many words there were
-	if (wordCount > 1)
-		charCount += wordCount -1;
-	/*printf("wordCount = %d\n",wordCount);
-	printf("charCount = %d\n",charCount);
-	printf("commandIterator = %d\n",commandIterator);
-	printf("charIterator = %d\n",charIterator);
-	
-	printf("numBits = %d\n",numBits);
-	if (argv[1][0] == 'e')
-		printf("encrypt\n");
-	
 
-	printf("##########################################\n");
-	*/
+    while (1) {
+        static struct option long_options[] =
+        {
+            {"e", no_argument, &edflg, 2},
+            {"d", no_argument, &edflg, 1},
+            {"h", no_argument, &hflg, 1},
+            {"cfb", required_argument, 0, 'a'},
+            {"cbc", required_argument, 0, 'b'},
+            {"ecb", required_argument, 0, 'c'},
+            {"t", required_argument, 0, 't'},
+            {"fi", required_argument, 0, 'i'},
+            {"fo", required_argument, 0, 'o'},
+            {"key", required_argument, 0, 'k'},
+            {"iv", required_argument, 0, 'v'},
+            {"streamlen", required_argument, 0, 's'},
+            {0,0,0,0}
+        };
 
-	//do the same but for the key
-	int keyCommandIndex = commandIterator +1; //key always starts at this part of the command
-	int charIteratorKey = 0;
-	int commandIteratorKey = keyCommandIndex;
-	int wordCountKey = 0;
-	int charCountKey = 0;	
-	while (1)
-	{
-		if (argv[commandIteratorKey][charIteratorKey] == '-')
-			break;
-		//printf("char[%d] = %c charCountKey = %d\n",charIteratorKey,argv[commandIteratorKey][charIteratorKey],charCountKey);
-		charIteratorKey++;
-		charCountKey++;
-		if (argv[commandIteratorKey][charIteratorKey] == '\0')
-		{
-			commandIteratorKey++;
-			wordCountKey++;
-			charIteratorKey = 0;
-		}
-	}
-	//spaces
-	if (wordCountKey > 1)
-		charCountKey += wordCountKey -1;
-	/*printf("wordCountKey = %d\n",wordCountKey);
-	printf("charCountKey = %d\n",charCountKey);
-	printf("commandIteratorKey = %d\n",commandIteratorKey);
-	printf("charIteratorKey = %d\n",charIteratorKey);*/
+        
 
-	//copy the key from the terminal to an array
-	unsigned char *key = malloc(charCountKey + 1);
-	int internalIteratorKey = 0;
-	for (int n = keyCommandIndex; n < keyCommandIndex+wordCountKey; n++)
-	{
-		for (int m = 0; m < strlen(argv[n]);m++)
-		{
-			//printf("%d -->%c\n",n,argv[n][m]);	
-			key[internalIteratorKey] = argv[n][m];
-			internalIteratorKey++;
-		}
-		key[internalIteratorKey] = ' ';
-		internalIteratorKey++;
-	}
+        int option_index = 0;
+        opterr = 0;
+        c = getopt_long_only (argc, argv, "a:b:c:t:i:o:k:v:s:", long_options, option_index);
 
-	//get original key length and determine the required length 
-	int originalKeyLength = charCountKey;
-	int requiredKeyLength = numBits/8; // either 16, 24 or 32
 
-	//make an array of the required length and copy the original 
-	unsigned char *paddedKey = malloc(requiredKeyLength + 1);
-	for (int i = 0; i < originalKeyLength; i++)
-		paddedKey[i] = key[i];
-	//padding with zeros		
-	for (int j = originalKeyLength; j < requiredKeyLength; j++)
-		paddedKey[j] = 0x0;
+        /* Detect the end of the options. */
+        if (c == -1)
+            break;
 
-	//expand the key
-	unsigned char expandedKeys[15][4][4];
-	keyExpander(paddedKey,expandedKeys,numBits);
+        switch (c)
+        {
+            case 0:
+            /* If this option set a flag, do nothing else now. */
+                if (long_options[option_index].name != 0)
+                    break;
 
-	/*printf("\nOriginal key:\n");
-	for (int i = 0; i < requiredKeyLength; i++)
-		printf("%c",paddedKey[i]);
-	printf("\n");*/
 
-	//if we the user gave the encrypt command
-	if (argv[1][0] == 'e')
-	{
-		//copy the plaintext from the terminal to an array
-		unsigned char *plaintext = malloc(charCount + 1);
-		int internalIterator = 0;
-		for (int n = 4; n < 4+wordCount; n++)
-		{
-			for (int m = 0; m < strlen(argv[n]);m++)
-			{
-				//printf("%d -->%c\n",n,argv[n][m]);	
-				plaintext[internalIterator] = argv[n][m];
-				internalIterator++;
-			}
-			plaintext[internalIterator] = ' ';
-			internalIterator++;
-		}
-		//get required plaintext length
-		int originalPlaintextLength = charCount;
-		int requiredPlaintextLength = getrequiredLength(originalPlaintextLength);
-		//get the number of blocks the plaintext must be broken up into
-		int numBlocks = requiredPlaintextLength/16;
-		//make an array of the required length and copy the original 
-		unsigned char *paddedString = malloc(requiredPlaintextLength + 1);
-		for (int i = 0; i < originalPlaintextLength; i++)
-			paddedString[i] = plaintext[i];
-		//padding with zeros
-		for (int j = originalPlaintextLength; j < requiredPlaintextLength; j++)
-			paddedString[j] = 0x0;
-		/*printf("Original plaintext:\n");
-		for (int i = 0; i < requiredPlaintextLength; i++)
-			printf("%c",paddedString[i]);
-		printf("\n");*/
-		
-		if (strcmp(argv[2],"ECB") == 0)
-		{
-			showSteps = true; //enable printing ECB steps to the console
-			printf("*******Encryption*******\n");
-			aesEncrypt(paddedString,expandedKeys,numBlocks,numBits);
-			int printIterator = 0;
-			printf("*******Encryption final result:*******\n");
-			for (int m = 0; m < numBlocks; m++)
-			{
-				for (int n = 0; n < 16; n++)
-				{
-					printf("%02x ",paddedString[printIterator]);
-					printIterator++;
-				}
-				printf("\n");
-			}
-			//printf("Complete Cyphertext\n");
-			//for (int i = 0; i < requiredPlaintextLength; i++)
-			//	printf("%02x ",paddedString[i]);
-			//printf("\n");
+            case 'a':
+                cfbflg = 1;
+                numBits = strtol(optarg, NULL, 10);
+                aesMode = mCFB;
+                break;
 
-			/*printf("*******Decryption*******\n");
-			//call the decryption function
-			aesDecrypt(paddedString,expandedKeys,numBlocks,numBits);
-			//printf("Complete decryptedText\n");
-			for (int i = 0; i < requiredPlaintextLength; i++)
-				printf("%c",paddedString[i]);
-			printf("\n");*/
-			showSteps = false;
-		}
-	}
-	
+            case 'b':
+                cbcflg = 1;
+                numBits = strtol(optarg, NULL, 10);
+                aesMode = mCBC;
+                break;
+            
+            case 'c':
+                ecbflg = 1;
+                if (!optarg)
+                    nbflg = 1;
+                else 
+                    numBits = strtol(optarg, NULL, 10);
+                aesMode = mECB;
+                break;
+            
 
-	//print the expanded key
-	int numRounds;
-	if (numBits == 128)
-		numRounds = 11;
-	if (numBits == 192)
-		numRounds = 13;
-	if (numBits == 256)
-		numRounds = 15;
-	printf("\nKey expansion:\n");
-	for (int x = 0; x < numRounds; x++)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			for (int z = 0; z < 4; z++)
-			{
-				printf("%02x ",expandedKeys[x][z][y]);
-			}
-			
-		}
-		printf("\n");
-	}
+            case 't':
+                inputMode = String;
+                text = optarg;
+                break;
+            
+            case 'i':
+                inputMode = File;
+                iFile = optarg;
+                break;
 
-	return 0;
+            case 'o':
+                inputMode = File;
+                oFile = optarg;
+                break;
+
+            case 'k':
+                key = optarg;
+                break;
+
+            case 'v':
+                iv = optarg;
+                break;
+
+            case 's':
+                streamlen = strtol(optarg, NULL, 10);
+                break;
+
+            case '?':
+                if (optopt == 'a' || optopt == 'b' || optopt == 'c') {
+                    if (!optarg)
+                        nbflg = 1;
+                }
+                break;
+
+            default:
+                printError("Invalid command!");
+                break;
+        }
+
+    
+    }
+
+    if (hflg == 1) 
+        printHelp();
+
+    if (edflg == 0) 
+        printError("Please specify Encryption or Decrytion mode!");
+
+    if (nbflg) 
+        printError("Please specify <len> after aes mode!");
+
+    if (!(numBits == 128 | numBits == 192 | numBits == 256))
+        printError("Please specify correct value for key length");
+
+    if (cfbflg ^ cbcflg ^ ecbflg == 0){
+        if (cfbflg || cbcflg || ecbflg)
+            printError("Only one mode of cipher [cfb|cbc|ecb] may be specified!");
+        else
+            printError("Please specify AES mode!");   
+    }
+
+    if (text && (iFile || oFile))
+        printError("Text AND File not allowed in the same command!");
+    else if (!text && !(iFile && oFile))
+        printError("Please specify both input and output file!");
+
+    if (!key) 
+        printError("Please specify the Key");
+
+    if (!iv)
+        printError("Please specify the Intialization Vector");
+
+    if (aesMode == mCFB && streamlen == 0)
+        printError("Please specify valid streamlen for CFB!");
+    
+    printf("%s %s\n", iFile, oFile);
+
+    if (inputMode == File) {
+        if (!addFiles(iFile, oFile))
+            exit(0);        
+    }
+    else {
+        textSize = strlen(text);
+        addString(text, textSize);
+        // fullOutput = calloc((textSize+blockSize-1)/blockSize, sizeof(char));
+    }
+   
+    edflg--; // move edflg from 1 and 2 to 0 and 1
+    
+    char sr[blockSize];
+    padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
+    printf("2\n");
+    int sl = streamlen/8; // bits to bytes
+    int currKeySize = strlen(key);// non-padded size of the key
+
+
+    int cbl = 0; // number of bytes read from current block
+    do {
+        cbl = getNextBlock(iblock, blockSize);
+
+        // NOTE: cbl will return the number of bytes that were ACTUALLY written from the fullstring
+        // this number may be different to blocksize for the last block so check and pad iblock as required.
+        //This won't interfere with cfb as long as cbl remains the same
+        switch (aesMode)
+        { // write output to oblock
+            case mCFB:
+                CFB(edflg, iblock, oblock, key, sr, currKeySize, sl, cbl, blockSize, numBits);
+                break;
+            
+            case mCBC:
+                //Sirsh
+                break;
+            case mECB:
+                //JP
+                break;
+            default:
+                break;
+        }
+
+        int lenPrint = (aesMode == mCFB) ? cbl : blockSize;
+
+        if (inputMode == String) {
+            for(int i = 0; i < lenPrint; i++)
+                printf("%c", oblock[i]); // flushes out the current e/d block out to terminal
+        }
+        else if (inputMode == File)
+            writeBlock(oblock, NULL, lenPrint);
+       
+    } while(cbl == blockSize); // no blocks remaining if cbl != blocksize
+    
+    printf("\n%s operation has finished.\n\n", (edflg == 1) ? "Encryption" : "Decryption");
+    
+
 }

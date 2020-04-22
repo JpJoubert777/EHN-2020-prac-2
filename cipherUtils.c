@@ -5,7 +5,7 @@
 FILE *rFile = NULL, *wFile = NULL; // rFile = file being read from, wFile = file being written to 
 char *string = NULL; // current string that is divided into blocks
 int stringSize = 0; // current string full length
-int mode = 1; // 1 if string mode, 0 if file mode
+int inputMode = 1; // 1 if string inputMode, 0 if file inputMode
 
 /**
  * @brief Treats input and output as file paths that can be used to write them. Opens the files in their respective access modes(input -> read-only, output -> write) and assigns them to global pointers that can be used by other functions. 
@@ -17,12 +17,19 @@ int mode = 1; // 1 if string mode, 0 if file mode
  * @return int 1 if successfully opened, 0 if unsuccessful
  */
 int addFiles(char *input, char *output) {
+    printf("r\n");
     rFile = fopen(input, "r");
-    if (rFile == NULL)
+    if (rFile == NULL) {
+        fprintf(stderr, "Could not open %s or File not found", input);
         return 0;
+    }
+    printf("w\n");    
     wFile = fopen(output, "w+");
+    printf("end\n");
     string = NULL;
-    mode = 0; // file mode
+    inputMode = 0; // file inputMode
+
+    return 1;
 } 
 
 /**
@@ -35,7 +42,7 @@ void addString(char* fullString, int size) {
     closeFiles();
     string = fullString;
     stringSize = size;
-    mode = 1; // string mode
+    inputMode = 1; // string inputMode
 } 
 
 /**
@@ -53,7 +60,7 @@ void closeFiles() {
 } 
 
 /**
- * @brief Reads the next block of bytes into bc, either from the file being read or the string based on the mode. Returns the number of bytes that were read into bc. This number lower than blockSize if there are not enough bytes left in the string.
+ * @brief Reads the next block of bytes into bc, either from the file being read or the string based on the inputMode. Returns the number of bytes that were read into bc. This number lower than blockSize if there are not enough bytes left in the string.
  * 
  * @param bc block will be loaded into this array
  * @param blockSize number of bytes to be loaded into this block
@@ -61,7 +68,7 @@ void closeFiles() {
  */
 int getNextBlock(char *bc, int blockSize) {
     int size = 0;
-    if (mode) { // string mode
+    if (inputMode) { // string inputMode
         if (stringSize == 0) return 0;
         
         size = (stringSize > blockSize) ? blockSize : stringSize;
@@ -72,7 +79,7 @@ int getNextBlock(char *bc, int blockSize) {
         stringSize -= size;
     }
 
-    else { //file mode
+    else { //file inputMode
         if (rFile == NULL) return 0;
 
         size = fread(bc, sizeof(char), blockSize, rFile);
@@ -83,7 +90,7 @@ int getNextBlock(char *bc, int blockSize) {
 }
 
 /**
- * @brief Copies bytes from bc to the respective output based on the mode(to output if mode=1 and to file if mode=0). If output == NULL and mode=0, write to file else write to output array. Size is the number of bytes to be written from bc to the correct output.
+ * @brief Copies bytes from bc to the respective output based on the inputMode(to output if inputMode=1 and to file if inputMode=0). If output == NULL and inputMode=0, write to file else write to output array. Size is the number of bytes to be written from bc to the correct output.
  * NOTE: if output is specified, user's responsibility to ensure that size doesn't exceed the length of output
  * 
  * @param bc block to copy from
@@ -92,11 +99,10 @@ int getNextBlock(char *bc, int blockSize) {
  * @return int 1 if write success else 0
  */
 int writeBlock(char *bc, char* output, int size) {
-    if (mode && output != NULL) { //string mode
-        if (output == NULL) return 0;
+    if (inputMode && output != NULL) { //string inputMode
         for (int i = 0; i < size; output[i++] = bc[i]);
     }
-    else if (!mode && output == NULL) { //file mode
+    else if (!inputMode && output == NULL) { //file inputMode
         fwrite(bc, sizeof(char), size, wFile);
         if (feof(rFile)) closeFiles();
     }

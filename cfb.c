@@ -1,3 +1,14 @@
+/**
+ * @file cfb.c
+ * @author Vishal Thalla
+ * @brief 
+ * @version 0.1
+ * @date 2020-04-22
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -23,7 +34,7 @@
  * @param blockSize number of bytes per block
  * @param numBits AES key size mode
  */
-void CFB(uint mode, char *input, char *output, char *key, char *sr, int currKeySize, int sl, const int inputSize, const int blockSize, const int numBits) {
+void CFB(int mode, char *input, char *output, char *key, char *sr, int currKeySize, int sl, const int inputSize, const int blockSize, const int numBits) {
     const int fullKeySize = 32;
     char fullKey[fullKeySize];
     padRight(key, fullKey, currKeySize, fullKeySize); // pad the key to a full 32 bytes to feed into AES key expander

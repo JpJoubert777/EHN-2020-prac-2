@@ -17,15 +17,13 @@ int inputMode = 1; // 1 if string inputMode, 0 if file inputMode
  * @return int 1 if successfully opened, 0 if unsuccessful
  */
 int addFiles(char *input, char *output) {
-    printf("r\n");
+    
     rFile = fopen(input, "r");
     if (rFile == NULL) {
         fprintf(stderr, "Could not open %s or File not found", input);
         return 0;
-    }
-    printf("w\n");    
+    }    
     wFile = fopen(output, "w+");
-    printf("end\n");
     string = NULL;
     inputMode = 0; // file inputMode
 

@@ -82,8 +82,8 @@ int main(int argc,char* argv[]) {
     char *iFile = NULL, *oFile = NULL;
 
     int cfbflg = 0, cbcflg = 0, ecbflg = 0, nbflg = 0;
-    static int edflg;
-    static int hflg;
+    static int edflg; // determines whether ecryption or decryption
+    static int hflg; 
 
 
 
@@ -234,10 +234,11 @@ int main(int argc,char* argv[]) {
     }
    
     edflg--; // move edflg from 1 and 2 to 0 and 1
+    // from here if encryption if 1 and decryption if 0 for edflg
     
     char sr[blockSize];
     padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
-    printf("2\n");
+
     int sl = streamlen/8; // bits to bytes
     int currKeySize = strlen(key);// non-padded size of the key
 

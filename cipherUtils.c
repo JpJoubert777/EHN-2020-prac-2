@@ -48,7 +48,6 @@ void addString(char* fullString, int size) {
  * NOTE: this is called automatically after the last block from rFile is encrypted and written to wFile automatically. But when stopping early, this should be called by user program.
  */
 void closeFiles() {
-    printf("CLOSING FILES\n");
     if (rFile != NULL) 
         fclose(rFile);
     if (wFile != NULL)

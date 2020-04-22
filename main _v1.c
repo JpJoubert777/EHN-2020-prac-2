@@ -194,18 +194,6 @@ int main(int argc,char* argv[]) {
     if (edflg == 0) 
         printError("Please specify Encryption or Decrytion mode!");
 
-    edflg--; // move edflg from 1 and 2 to 0 and 1
-    // from here if encryption if 1 and decryption if 0 for edflg
-
-    if (aesMode == mECB) {
-        if (edflg == 0) 
-            printError("Decryption of strings not allowed for ECB AES!");
-        if (inputMode == File)
-            printError("Files not allowed for ECB mode!");
-    }
-     
-        
-
     if (nbflg) 
         printError("Please specify <len> after aes mode!");
 
@@ -233,6 +221,7 @@ int main(int argc,char* argv[]) {
     if (aesMode == mCFB && streamlen == 0)
         printError("Please specify valid streamlen for CFB!");
     
+    printf("%s %s\n", iFile, oFile);
 
     if (inputMode == File) {
         if (!addFiles(iFile, oFile))
@@ -244,11 +233,11 @@ int main(int argc,char* argv[]) {
         // fullOutput = calloc((textSize+blockSize-1)/blockSize, sizeof(char));
     }
    
-    
+    edflg--; // move edflg from 1 and 2 to 0 and 1
+    // from here if encryption if 1 and decryption if 0 for edflg
     
     char sr[blockSize];
-    if (aesMode == mCFB)
-        padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
+    padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
 
     int sl = streamlen/8; // bits to bytes
     int currKeySize = strlen(key);// non-padded size of the key
@@ -272,7 +261,6 @@ int main(int argc,char* argv[]) {
                 break;
             case mECB:
                 //JP
-		        ECB(iblock,oblock,key,currKeySize,cbl,numBits);
                 break;
             default:
                 break;
@@ -280,9 +268,9 @@ int main(int argc,char* argv[]) {
 
         int lenPrint = (aesMode == mCFB) ? cbl : blockSize;
 
-        if (aesMode != mECB && inputMode == String ) {
+        if (inputMode == String) {
             for(int i = 0; i < lenPrint; i++)
-                printf("%02x ", (unsigned char)oblock[i]); // flushes out the current e/d block out to terminal
+                printf("%02X", oblock[i]); // flushes out the current e/d block out to terminal
         }
         else if (inputMode == File)
             writeBlock(oblock, NULL, lenPrint);

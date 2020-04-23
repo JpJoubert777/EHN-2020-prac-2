@@ -312,6 +312,7 @@ int main(int argc,char* argv[]) {
     } while(cbl == blockSize); // no blocks remaining if cbl != blocksize
     
     if (inputMode == String) {
+	printf("\nFull encrypted output:");
         int lenPrint = (aesMode == mCFB) ? textSize : fullSize;
         for (int i = 0; i < lenPrint; i++) {
             if (i%blockSize == 0)
@@ -327,6 +328,39 @@ int main(int argc,char* argv[]) {
     
 
     printf("\n%s operation has finished.\n\n", (edflg == 1) ? "Encryption" : "Decryption");
-    
+
+	
+    	//recreate and print the expanded key if ECB was chosen.
+	if (showSteps == true)
+	{
+		int requiredKeyLength = numBits/8; // either 16, 24 or 32	
+		if (currKeySize < requiredKeyLength)
+			for(int i = currKeySize; i < requiredKeyLength; i++)
+				key[i] = 0x0;//padding
+
+		unsigned char expandedKeys[15][4][4];
+		keyExpander(key,expandedKeys,numBits);
+		//print the expanded key
+		int numRounds;
+		if (numBits == 128)
+			numRounds = 11;
+		if (numBits == 192)
+			numRounds = 13;
+		if (numBits == 256)
+			numRounds = 15;
+		printf("\nKey expansion:\n");
+		for (int x = 0; x < numRounds; x++)
+		{
+			for (int y = 0; y < 4; y++)
+			{
+				for (int z = 0; z < 4; z++)
+				{
+					printf("%02x ",expandedKeys[x][z][y]);
+				}
+				
+			}
+			printf("\n");
+		}
+	}	showSteps = false;
 
 }

@@ -1,39 +1,56 @@
 # EHN-2020-prac-2
 
-10 April group 20
+23 April 2020
+Group 20
 
 Please download and open this readme.md in a text editor as github is hiding some of the parameters for some reason.
 
 Open a terminal in the same folder as the source files.
-Type "make" and hit enter.
-The command after this has the following format:
+Compile: Type "make" and hit enter.
 
-./main <e/d> <ECB/CBC/CFB> <len> <textString> -key <keyString> -go
+Run: Type ./main and refer to the help menu below to specify the parameters
+
+Help Menu:
+
+Usage:
+files: [-e|-d] [-cbc|-cfb|-ecb] <len> -fi <input file> -fo <encrypted file> -key <password> -iv <initialization vector>
+text: [-e|-d] [-cbc|-cfb|-ecb] <len> -t <text to process> -key <password> -iv <initialization vector> (-streamlen <len>)
+use -h for help
 
 Parameters:
+-e			        encryption
+-d			        decryption
+-cbc <len>		    cbc encryption/decryption
+-cfb <len>		    cfb encryption/decryption
+-ecb <len>		    ecb encryption/decryption
+<len>			    128, 192 or 256
+-t			        <text to process> (in quotation marks)
+-key			    <password>
+-fi			        <input file> (in quotation marks)
+-fo			        <output file> (in quotation marks)
+-streamlen <len>	length of the stream (for cfb: either 8, 64 or 128)
+-h			help
 
-• e encryption
+ECB AES usage example:
+./main -e -ecb <len> -t <text to process> -key <password>
+NOTE: ECB AES refers to pure AES encryption and this mode may only be used for encryption of text strings.
 
-• d decryption
 
-• ECB for electronic codebook. This means PURE AES functionality without any CFB or CBC.
+CFB AES usage example:
+./main -e -cfb <len> -t <text to process> -key <password> -iv <initialization vector> -streamlen <len>
+NOTE: streamlen must be specified for CFB.
 
-• CBC for cypher block chaining
+CBC AES usage example:
+./main -e -cbc <len> -t <text to process> -key <password> -iv <initialization vector>
 
-• CFB for cypher feedback
+NOTE:Initialization Vector (iv) is not required for ecb but must be specified for CFB and CBC
 
-• <len> either 128, 192 or 256
-  
-• <textString> for text to decrypt
-  
-• -key for the password
+The output for text string input will be printed in the hexadecimal format with spaces between each byte and 16 bytes per line.
+This output MAY NOT be used for the text string with decryption; Decryption may only be used with files.
 
-Example usage:
-./main e ECB 128 EHN 410 practical 2 -key AES_encrypt -go
+NOTE: sub-directories will not be created automatically!
 
-After this you would hit enter.
 
-ASCII characters only.
 
 
 

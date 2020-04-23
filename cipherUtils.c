@@ -24,6 +24,11 @@ int addFiles(char *input, char *output) {
         return 0;
     }    
     wFile = fopen(output, "w+");
+    if (wFile == NULL) {
+        fprintf(stderr, "Could not open or create file: %s\n", output);
+        return 0;
+    }
+        
     string = NULL;
     inputMode = 0; // file inputMode
 

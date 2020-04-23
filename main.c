@@ -19,6 +19,10 @@
 #include "cipherUtils.h"
 
 
+/**
+ * @brief Utility function to print the usage instructions to console
+ * 
+ */
 void printUsage() {
     fprintf(stderr, "\n");
     fprintf(stderr, "Usage:\n");
@@ -28,26 +32,35 @@ void printUsage() {
     fprintf(stderr, "\n");
 }
 
+/**
+ * @brief Utility function to print an error message to console, print the usage instructions and exit the program
+ * 
+ * @param message error message string
+ */
 void printError(char *message) {
     fprintf(stderr, "%s See Usage.\n", message);
     printUsage();
     exit(0);
 }
 
+/**
+ * @brief Utility function to print the Help menu to console and exit
+ * 
+ */
 void printHelp() {
     
     printUsage();
+    fprintf(stderr, "Parameters:\n");
     fprintf(stderr, "-e\t\t\tencryption\n");
     fprintf(stderr, "-d\t\t\tdecryption\n");
     fprintf(stderr, "-cbc <len>\t\tcbc encryption/decryption\n");
     fprintf(stderr, "-cfb <len>\t\tcfb encryption/decryption\n");
     fprintf(stderr, "-ecb <len>\t\tecb encryption/decryption\n");
     fprintf(stderr, "<len>\t\t\t128, 192 or 256\n");
-    fprintf(stderr, "-t\t\t\t<text to process>\n");
+    fprintf(stderr, "-t\t\t\t<text to process> (in quotation marks)\n");
     fprintf(stderr, "-key\t\t\t<password>\n");
-    fprintf(stderr, "-fi\t\t\t<input file>\n");
-    fprintf(stderr, "-fo\t\t\t<output file>\n");
-    fprintf(stderr, "-fo\t\t\t<output file>\n");
+    fprintf(stderr, "-fi\t\t\t<input file> (in quotation marks)\n");
+    fprintf(stderr, "-fo\t\t\t<output file> (in quotation marks)\n");
     fprintf(stderr, "-streamlen <len>\tlength of the stream (for cfb: either 8, 64 or 128)\n");
     fprintf(stderr, "-h\t\t\thelp\n");
     // fprintf(stderr, "NOTE: Pure AES ECB mode is run by default if -cbc/cfb not specified\n");
@@ -66,28 +79,28 @@ int main(int argc,char* argv[]) {
 
     enum {File, String} inputMode = String;
 
-    int c;
+    
 
     int textSize = 0; // length of text
     int fullSize = 0; // full size will be the length of text padded to be a multiple of the blocksize
-    int numBits = 0;
-    int streamlen = 0;
+    int numBits = 0; // key size for AES algorithm
+    int streamlen = 0; // stream length in bits for cfb
     const int blockSize = 16;
 
     char iblock[blockSize]; // will store the current read block for each iteration
     char oblock[blockSize]; // will store the current write block for each iteration
-    char *iv = NULL;
-    char *key = NULL;
-    char *text = NULL;
+    char *iv = NULL; // stores unpadded iv
+    char *key = NULL; // stores unpadded key
+    char *text = NULL; // stores unpadded text string
     char *fullOutput = NULL; // This will store the full output to the input text if required
-    char *outputtrav = fullOutput;
-    char *iFile = NULL, *oFile = NULL;
+    char *outputtrav = fullOutput; //outputtrav will be incremented to point to the beginning of the current block of output
+    char *iFile = NULL, *oFile = NULL; // input and output file paths
 
     int cfbflg = 0, cbcflg = 0, ecbflg = 0, nbflg = 0;
     static int edflg; // determines whether ecryption or decryption
-    static int hflg; 
+    static int hflg;  // dtermines whether help menu to be shown
 
-
+    int c; // used for storing get_opt_only output
     while (1) {
         static struct option long_options[] =
         {
@@ -171,14 +184,23 @@ int main(int argc,char* argv[]) {
                 streamlen = strtol(optarg, NULL, 10);
                 break;
 
-            case '?':
+            case '?': // reaches here if the required argument for a certain parameter is not specified
                 if (optopt == 'a' || optopt == 'b' || optopt == 'c') {
                     if (!optarg)
                         nbflg = 1;
                 }
+                if (optopt == 't' && !optarg) 
+                    printError("Please specify the text string!");
+
+                if (optopt == 'i' && !optarg) 
+                    printError("Please specify the path for the input file!");
+
+                if (optopt == 'o' && !optarg) 
+                    printError("Please specify the path for the output file!");
+
                 break;
 
-            default:
+            default: // reaches here if invalid parameter is entered
                 printError("Invalid command!");
                 break;
         }
@@ -193,16 +215,7 @@ int main(int argc,char* argv[]) {
         printError("Please specify Encryption or Decrytion mode!");
 
     edflg--; // move edflg from 1 and 2 to 0 and 1
-    // from here if encryption if 1 and decryption if 0 for edflg
-
-    if (aesMode == mECB) {
-        if (edflg == 0) 
-            printError("Decryption of strings not allowed for ECB AES!");
-        if (inputMode == File)
-            printError("Files not allowed for ECB mode!");
-    }
-     
-        
+    // from here if encryption if 1 and decryption if 0 for edflg        
 
     if (nbflg) 
         printError("Please specify <len> after aes mode!");
@@ -220,9 +233,16 @@ int main(int argc,char* argv[]) {
     if (text && (iFile || oFile))
         printError("Text AND File not allowed in the same command!");
 
-
     else if (!text && !(iFile && oFile))
         printError("Please specify both input and output file!");
+
+    if (edflg == 0 && inputMode == String) 
+        printError("Decryption on text strings not allowed!");
+
+    if (aesMode == mECB && inputMode == File)
+        printError("Files not allowed for ECB mode!");
+    
+    
 
     if (!key) 
         printError("Please specify the Key");
@@ -242,10 +262,9 @@ int main(int argc,char* argv[]) {
         
         textSize = strlen(text);
         fullSize = textSize + blockSize - (textSize%blockSize);
-        // printf("%i\n %i", textSize, fullSize);
         addString(text, textSize);
         fullOutput = (char *)calloc(fullSize, sizeof(char)); // fullOutput needs to be used for output so this pointer should hold the value of the array beginning
-        outputtrav = fullOutput; //outputtrav will be incremented to point to the beginning of the current block
+        outputtrav = fullOutput; 
     }
    
 
@@ -253,7 +272,7 @@ int main(int argc,char* argv[]) {
     
     char sr[blockSize];
     if (aesMode != mECB)
-        padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
+        padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb and cbc
 
     int sl = streamlen/8; // bits to bytes
     int currKeySize = strlen(key);// non-padded size of the key
@@ -262,7 +281,7 @@ int main(int argc,char* argv[]) {
     int cbl = 0; // number of bytes read from current block
     do {
         cbl = getNextBlock(iblock, blockSize);
-        if (cbl == 0)
+        if (cbl == 0) // avoid running an extra iteration due to size of last block == blockSize
             break;
 
         

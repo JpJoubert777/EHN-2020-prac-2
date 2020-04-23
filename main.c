@@ -251,7 +251,7 @@ int main(int argc,char* argv[]) {
     
     
     char sr[blockSize];
-    if (aesMode == mCFB)
+    // if (aesMode == mCFB)
         padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
 
     int sl = streamlen/8; // bits to bytes
@@ -261,6 +261,8 @@ int main(int argc,char* argv[]) {
     int cbl = 0; // number of bytes read from current block
     do {
         cbl = getNextBlock(iblock, blockSize);
+        if (cbl == 0)
+            break;
 
         // NOTE: cbl will return the number of bytes that were ACTUALLY written from the fullstring
         // this number may be different to blocksize for the last block so check and pad iblock as required.
@@ -276,20 +278,14 @@ int main(int argc,char* argv[]) {
                 if (edflg == 1)
                 {
                     //Encrypt
-                    CBC_encrypt(iblock,iv,key,currKeySize,cbl,numBits,blockSize,oblock);
-                    iv = oblock;
-
+                    CBC_encrypt(iblock,sr,key,currKeySize,cbl,numBits,blockSize,oblock);
+                    writeBlock(oblock, sr, blockSize);
                 }
-                if(edflg == 0)
+                else if(edflg == 0)
                 {
                     //Decrypt
-                    CBC_decrypt(iblock,iv,key,currKeySize,cbl,numBits,blockSize,oblock);
-                    char newIv [blockSize];
-                    for (int i = 0; i < blockSize; i++)
-                    {
-                        newIv[i] = iblock[i];
-                    }
-                    iv = newIv;
+                    CBC_decrypt(iblock,sr,key,currKeySize,cbl,numBits,blockSize,oblock);
+                    writeBlock(iblock, sr, blockSize);
 
                 }
                 break;

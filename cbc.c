@@ -6,30 +6,6 @@
 #include "cbc.h"
 #include "cipherUtils.h"
 
-// int main()
-// {
-// 	char * UserIV = "1234567890123456";
-// 	char * Userplaintext = "EnjoyThisEHN12";
-// 	char * Userkey = "!@#$%";
-
-// 	char ciphertext [16];
-// 	char newPlain [16];
-    
-// 	CBC_encrypt(Userplaintext,UserIV,Userkey, 16, 16, 128,16, ciphertext);
-
-//     CBC_decrypt(ciphertext,UserIV,Userkey, 16, 16, 128,16, newPlain);
-
-//     for (int i = 0; i < 16; i++)
-//     {
-//     	printf("%c", ciphertext[i]);
-//     }
-//     printf("%s\n", "");
-//     for (int i = 0; i < 16; i++)
-//     {
-//     	printf("%c", newPlain[i]);
-//     }
-// }
-
 /**
  * @brief      A bitwise XOR of string 1 and string 2 and stored in string 3
  *
@@ -66,14 +42,14 @@ void CBC_encrypt(char* Userplaintext, char* UserIV, char* Userkey, const int cur
 	char * key [32]; //the max key size (32 bytes), also padded if neccessary
 	char * IV [blocksize];//the max IV size (16 bytes), will be padded if neccessary
 
-	padRight (Userplaintext,plaintext,strlen(Userplaintext), blocksize);
+	padRight (Userplaintext,plaintext,inputSize, blocksize);
 	padRight (Userkey,key,strlen(Userkey), 32);
-	padRight(UserIV, IV, strlen(UserIV), blocksize);
+	// padRight(UserIV, IV, strlen(UserIV), blocksize);
 
 	unsigned char expandedKey[15][4][4];// to be passed to AES algorithm
 
-	char first [inputSize]; //stores output of XOR algorithm
-	XOR(plaintext, IV, first, inputSize);
+	char first [blocksize]; //stores output of XOR algorithm
+	XOR(plaintext, UserIV, first, blocksize);
 
 	keyExpander(key, expandedKey, numBits);
 	applyEncryptionRounds(first, expandedKey, numBits);//calls AES encryption alogorithm
@@ -106,15 +82,15 @@ void CBC_decrypt(char* ciphertext, char* UserIV, char* Userkey, const int curKey
 	char * IV [blocksize];//the initialisation vector
 
 	padRight (Userkey,key,strlen(Userkey), 32);//padding for correct size
-	padRight(UserIV, IV, strlen(UserIV), blocksize);//padding for correct size
+	// padRight(UserIV, IV, blocksize, blocksize);//padding for correct size
 
 	unsigned char expandedKey[15][4][4];// to be passed to AES algorithm
 	keyExpander(key, expandedKey, numBits);
 	applyDecryptionRounds(ciphertext, expandedKey, numBits);
 
 
-	char first [inputSize];//stores output of XOR alogrithm
-	XOR(ciphertext, IV, first, inputSize);
+	char first [blocksize];//stores output of XOR alogrithm
+	XOR(ciphertext, UserIV, first, blocksize);
 
 	for (int i = 0; i < blocksize; i++)
     {

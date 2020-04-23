@@ -1,38 +1,61 @@
 #include <stdbool.h>
+/**
+ * @brief Variable to indicate if AES ECB steps should be printed to terminal
+ */
 bool showSteps;
-// Array containing the Rijndael S-box used in the core key sheduler
-//source: https://cryptography.fandom.com/wiki/Rijndael_S-box
+/**
+ * @brief Array containing the Rijndael S-box used in the core key sheduler
+ * @see https://cryptography.fandom.com/wiki/Rijndael_S-box
+ */
 unsigned char sBox[256];
 
-// Ditto but the inverse
+/**
+ * @brief Array containing the Rijndael inverse S-box
+ * @see https://cryptography.fandom.com/wiki/Rijndael_S-box
+ */
 unsigned char inverseSbox[256];
 
-// Galois multiplication lookup tables
-//source: https://cryptography.fandom.com/wiki/Rijndael_mix_columns
-
-//Contains the results of multiplying the numbers 0-255 with 2 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 2 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply2[256];
 
-//Contains the results of multiplying the numbers 0-255 with 3 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 3 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply3[256];
 
-//Contains the results of multiplying the numbers 0-255 with 9 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 9 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply9[256];
 
-//Contains the results of multiplying the numbers 0-255 with 11 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 11 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply11[256];
 
-//Contains the results of multiplying the numbers 0-255 with 13 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 13 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply13[256];
 
-//Contains the results of multiplying the numbers 0-255 with 14 modulo (x^4 + 1)
+/**
+ * @brief Contains the results of multiplying the numbers 0-255 with 14 modulo (x^4 + 1)
+ * @see https://cryptography.fandom.com/wiki/Rijndael_mix_columns
+ */
 unsigned char multiply14[256];
 
-//A handy array that returns the Rcon value given the Rcon index
-//source: https://cryptography.fandom.com/wiki/Rijndael_key_schedule
+/**
+ * @brief Array that returns the Rcon value given the Rcon index
+ * @see https://cryptography.fandom.com/wiki/Rijndael_key_schedule
+ */
 unsigned char Rcon[255];
-
-bool showSteps; //variable to enable printing steps or not for ECB
 
 /**
  * @brief Prints the state array as characters to the console 
@@ -158,7 +181,7 @@ void applyEncryptionRounds(unsigned char plaintext[16],unsigned char expandedKey
  */
 void applyDecryptionRounds(unsigned char cyphertext[16],unsigned char expandedKeys[15][4][4], int numBits);
 /**
- * @brief Performs encryption on a plaintext string of arbitrary length by breaking it into 16-byte blocks.
+ * @brief Performs padding and encryption on a plaintext string of 16-bytes
  *        
  * @param unPaddedString An input string not padded with zeros
  * @param encryptedString The output encrypted string

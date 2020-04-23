@@ -273,6 +273,25 @@ int main(int argc,char* argv[]) {
             
             case mCBC:
                 //Sirsh
+                if (edflg == 1)
+                {
+                    //Encrypt
+                    CBC_encrypt(iblock,iv,key,currKeySize,cbl,numBits,blockSize,oblock);
+                    iv = oblock;
+
+                }
+                if(edflg == 0)
+                {
+                    //Decrypt
+                    CBC_decrypt(iblock,iv,key,currKeySize,cbl,numBits,blockSize,oblock);
+                    char newIv [blockSize];
+                    for (int i = 0; i < blockSize; i++)
+                    {
+                        newIv[i] = iblock[i];
+                    }
+                    iv = newIv;
+
+                }
                 break;
             case mECB:
                 //JP

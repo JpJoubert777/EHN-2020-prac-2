@@ -14,22 +14,19 @@ Usage:
 - text: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
 - use -h for help
 
-<pre>
 Parameters:
--e			        encryption
--d			        decryption
--cbc \<len\>		cbc encryption/decryption
--cfb \<len\>		cfb encryption/decryption
--ecb \<len\>		ecb encryption/decryption
-\<len\>			    128, 192 or 256
--t			        \<text to process\> (in quotation marks)
--key			    \<password\>
--fi			        \<input file\> (in quotation marks)
--fo			        \<output file\> (in quotation marks)
--streamlen \<len\>	length of the stream (for cfb: either 8, 64 or 128)
--h			        help
-</pre>
-
+- -e			       = encryption
+- -d			       = decryption
+- -cbc \<len\>		   = cbc encryption/decryption
+- -cfb \<len\>		   = cfb encryption/decryption
+- -ecb \<len\>		   = ecb encryption/decryption
+- \<len\>			   =     128, 192 or 256
+- -t			       = \<text to process\> (in quotation marks)
+- -key			       = \<password\>
+- -fi			       = \<input file\> (in quotation marks)
+- -fo			       = \<output file\> (in quotation marks)
+- -streamlen \<len\>	=    length of the stream (for cfb: either 8, 64 or 128)
+- -h			      =  help
 
 ECB AES usage example:\
 ./main -e -ecb \<len\> -t \<text to process\> -key \<password\>

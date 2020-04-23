@@ -3,8 +3,6 @@
 23 April 2020
 Group 20
 
-Please download and open this readme.md in a text editor as github is hiding some of the parameters for some reason.
-
 Open a terminal in the same folder as the source files.
 Compile: Type "make" and hit enter.
 
@@ -13,35 +11,35 @@ Run: Type ./main and refer to the help menu below to specify the parameters
 Help Menu:
 
 Usage:
-files: [-e|-d] [-cbc|-cfb|-ecb] <len> -fi <input file> -fo <encrypted file> -key <password> -iv <initialization vector>
-text: [-e|-d] [-cbc|-cfb|-ecb] <len> -t <text to process> -key <password> -iv <initialization vector> (-streamlen <len>)
+files: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -fi \<input file\> -fo \<encrypted file\> -key \<password\> -iv \<initialization vector\>
+text: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
 use -h for help
 
 Parameters:
 - -e			        encryption
 - -d			        decryption
-- -cbc <len>		    cbc encryption/decryption
-- -cfb <len>		    cfb encryption/decryption
-- -ecb <len>		    ecb encryption/decryption
-- <len>			        128, 192 or 256
+- -cbc \<len\>		    cbc encryption/decryption
+- -cfb \<len\>		    cfb encryption/decryption
+- -ecb \<len\>		    ecb encryption/decryption
+- \<len\>			        128, 192 or 256
 - -t			        \<text to process\> (in quotation marks)
-- -key			        <password>
-- -fi			        <input file> (in quotation marks)
-- -fo			        <output file> (in quotation marks)
-- -streamlen <len>	    length of the stream (for cfb: either 8, 64 or 128)
+- -key			        \<password\>
+- -fi			        \<input file\> (in quotation marks)
+- -fo			        \<output file\> (in quotation marks)
+- -streamlen \<len\>	    length of the stream (for cfb: either 8, 64 or 128)
 - -h			        help
 
 ECB AES usage example:
-./main -e -ecb <len> -t <text to process> -key <password>
+./main -e -ecb \<len\> -t \<text to process\> -key \<password\>
 NOTE: ECB AES refers to pure AES encryption and this mode may only be used for encryption of text strings.
 
 
 CFB AES usage example:
-./main -e -cfb <len> -t <text to process> -key <password> -iv <initialization vector> -streamlen <len>
+./main -e -cfb \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> -streamlen \<len\>
 NOTE: streamlen must be specified for CFB.
 
 CBC AES usage example:
-./main -e -cbc <len> -t <text to process> -key <password> -iv <initialization vector>
+./main -e -cbc \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\>
 
 NOTE:Initialization Vector (iv) is not required for ecb but must be specified for CFB and CBC
 

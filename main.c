@@ -88,7 +88,6 @@ int main(int argc,char* argv[]) {
     static int hflg; 
 
 
-
     while (1) {
         static struct option long_options[] =
         {
@@ -140,10 +139,7 @@ int main(int argc,char* argv[]) {
             
             case 'c':
                 ecbflg = 1;
-                if (!optarg)
-                    nbflg = 1;
-                else 
-                    numBits = strtol(optarg, NULL, 10);
+                numBits = strtol(optarg, NULL, 10);
                 aesMode = mECB;
                 break;
             
@@ -189,6 +185,7 @@ int main(int argc,char* argv[]) {
     
     }
 
+
     if (hflg == 1) 
         printHelp();
 
@@ -222,6 +219,8 @@ int main(int argc,char* argv[]) {
 
     if (text && (iFile || oFile))
         printError("Text AND File not allowed in the same command!");
+
+
     else if (!text && !(iFile && oFile))
         printError("Please specify both input and output file!");
 
@@ -240,29 +239,33 @@ int main(int argc,char* argv[]) {
             exit(0);        
     }
     else {
+        
         textSize = strlen(text);
         fullSize = textSize + blockSize - (textSize%blockSize);
-        // printf("%i %i", textSize, fullSize);
+        // printf("%i\n %i", textSize, fullSize);
         addString(text, textSize);
         fullOutput = (char *)calloc(fullSize, sizeof(char)); // fullOutput needs to be used for output so this pointer should hold the value of the array beginning
         outputtrav = fullOutput; //outputtrav will be incremented to point to the beginning of the current block
     }
    
+
     
     
     char sr[blockSize];
-    // if (aesMode == mCFB)
+    if (aesMode != mECB)
         padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb
 
     int sl = streamlen/8; // bits to bytes
     int currKeySize = strlen(key);// non-padded size of the key
 
-
+    
     int cbl = 0; // number of bytes read from current block
     do {
         cbl = getNextBlock(iblock, blockSize);
         if (cbl == 0)
             break;
+
+        
 
         // NOTE: cbl will return the number of bytes that were ACTUALLY written from the fullstring
         // this number may be different to blocksize for the last block so check and pad iblock as required.

@@ -6,14 +6,12 @@ Group 20
 Open a terminal in the same folder as the source files.
 Compile: Type "make" and hit enter.
 
-Run: Type ./main and refer to the help menu below to specify the parameters
-
-Help Menu:
+Run: Type ./main and refer to the Usage instructions below to specify the parameters
 
 Usage:
-files: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -fi \<input file\> -fo \<encrypted file\> -key \<password\> -iv \<initialization vector\>
-text: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
-use -h for help
+- files: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -fi \<input file\> -fo \<encrypted file\> -key \<password\> -iv \<initialization vector\>
+- text: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
+- use -h for help
 
 Parameters:
 - -e			        encryption

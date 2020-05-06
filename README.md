@@ -10,7 +10,7 @@ Compile: Type "make" and hit enter.
 Run: Type ./main and refer to the Usage instructions below to specify the parameters
 
 Usage:
-- files: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -fi \<input file\> -fo \<encrypted file\> -key \<password\> -iv \<initialization vector\>
+- files: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -fi \<input file\> -fo \<encrypted file\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
 - text: [-e|-d] [-cbc|-cfb|-ecb] \<len\> -t \<text to process\> -key \<password\> -iv \<initialization vector\> (-streamlen \<len\>)
 - use -h for help
 
@@ -29,7 +29,7 @@ Parameters:
 - -h			      =  help
 
 ECB AES usage example:\
-./main -e -ecb \<len\> -t \<text to process\> -key \<password\>
+./main -e -ecb \<len\> -t \<text to process\> -key \<password\>\
 NOTE: ECB AES refers to pure AES encryption and this mode may only be used for encryption of text strings.
 
 

@@ -73,7 +73,7 @@ int getNextBlock(char *bc, int blockSize) {
     if (inputMode) { // string inputMode
         if (stringSize == 0) return 0;
         
-        size = (stringSize > blockSize) ? blockSize : stringSize;
+        size = (stringSize > blockSize) ? blockSize : stringSize; // stream cipher requirement
         
         for (int i = 0; i < size; bc[i++] = *(string++));
         // string ptr will point to the beginning of the new block each call of this function 

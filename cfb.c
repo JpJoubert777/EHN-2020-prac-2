@@ -42,7 +42,7 @@ void CFB(int mode, char *input, char *output, char *key, char *sr, int currKeySi
 
     int iters = inputSize/sl;
     if (inputSize % sl != 0) 
-        iters++;
+        iters++; // extra iteration for that lsbs that are not a full block;
 
     char bc[blockSize];
     

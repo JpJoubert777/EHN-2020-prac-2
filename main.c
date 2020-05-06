@@ -25,7 +25,7 @@
 void printUsage() {
     fprintf(stderr, "\n");
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "files: [-e|-d] [-cbc|-cfb|-ecb] <len> -fi <input file> -fo <encrypted file> -key <password> -iv <initialization vector>\n");
+    fprintf(stderr, "files: [-e|-d] [-cbc|-cfb|-ecb] <len> -fi <input file> -fo <encrypted file> -key <password> -iv <initialization vector> (-streamlen <len>)\n");
     fprintf(stderr, "text: [-e|-d] [-cbc|-cfb|-ecb] <len> -t <text> -key <password> -iv <initialization vector> (-streamlen <len>)\n");
     fprintf(stderr, "use -h for help\n");
     fprintf(stderr, "\n");
@@ -69,6 +69,13 @@ void printHelp() {
 }
 
 
+/**
+ * @brief collects all the input args and performs encryption or decrytion with the appropriate mode.
+ * 
+ * @param argc argument count - number of args passed in through terminal
+ * @param argv arg values - array of char arrays(strings) where each string is a passed in arg
+ * @return int program exit value
+ */
 int main(int argc,char* argv[]) {
 
     
@@ -102,9 +109,9 @@ int main(int argc,char* argv[]) {
 
     int c; // used for storing get_opt_only output
     while (1) {
-        static struct option long_options[] =
+        static struct option long_options[] = 
         {
-            {"e", no_argument, &edflg, 2},
+            {"e", no_argument, &edflg, 2}, // stores all the possible arguments in a list
             {"d", no_argument, &edflg, 1},
             {"h", no_argument, &hflg, 1},
             {"cfb", required_argument, 0, 'a'},
@@ -116,7 +123,7 @@ int main(int argc,char* argv[]) {
             {"key", required_argument, 0, 'k'},
             {"iv", required_argument, 0, 'v'},
             {"streamlen", required_argument, 0, 's'},
-            {0,0,0,0}
+            {0,0,0,0} // shows end of list
         };
 
         
@@ -130,10 +137,9 @@ int main(int argc,char* argv[]) {
         if (c == -1)
             break;
 
-        switch (c)
+        switch (c) // stores values sent in through command line to be used by encryption and decryption algos
         {
             case 0:
-            /* If this option set a flag, do nothing else now. */
                 if (long_options[option_index].name != 0)
                     break;
 
@@ -207,7 +213,7 @@ int main(int argc,char* argv[]) {
     
     }
 
-
+    // NOTE: all print utility functions will exit the program after showing the messages
     if (hflg == 1) 
         printHelp();
 
@@ -260,18 +266,18 @@ int main(int argc,char* argv[]) {
     }
     else {
         
-        textSize = strlen(text);
-        fullSize = textSize + blockSize - (textSize%blockSize);
+        textSize = strlen(text); // useful for padding
+        fullSize = textSize + blockSize - (textSize%blockSize); // This size is a multiple of the blocksize. Useful when printing aes and cbc output.
         addString(text, textSize);
         fullOutput = (char *)calloc(fullSize, sizeof(char)); // fullOutput needs to be used for output so this pointer should hold the value of the array beginning
-        outputtrav = fullOutput; 
+        outputtrav = fullOutput; // outputtrav will point to the beginning of the current block in fullOutput
     }
    
 
     
     
-    char sr[blockSize];
-    if (aesMode != mECB)
+    char sr[blockSize]; // sr = padded iv and will modified depending on the iv requirements for each block iteration
+    if (aesMode != mECB) // NOTE: iv is NULL in ECB mode
         padRight(iv, sr, strlen(iv), blockSize); // ONLY for cfb and cbc
 
     int sl = streamlen/8; // bits to bytes
@@ -321,11 +327,11 @@ int main(int argc,char* argv[]) {
 
         int lenPrint = (aesMode == mCFB) ? cbl : blockSize;
 
-        if (inputMode == String) {
+        if (inputMode == String) { // output will also be loaded all into fulloutput
             for(int i = 0; i < lenPrint; i++)
-                *(outputtrav++) = oblock[i];
+                *(outputtrav++) = oblock[i]; // keep incrementing outputtrav to point to the newest addition into fulloutput
         }
-        else if (inputMode == File)
+        else if (inputMode == File) // each block is written to file one by one.
             writeBlock(oblock, NULL, lenPrint);
        
     } while(cbl == blockSize); // no blocks remaining if cbl != blocksize
@@ -335,7 +341,7 @@ int main(int argc,char* argv[]) {
         for (int i = 0; i < lenPrint; i++) {
             if (i%blockSize == 0)
                 printf("\n");
-            printf("%02x ", (unsigned char)fullOutput[i]);
+            printf("%02x ", (unsigned char)fullOutput[i]); // fulloutput printed as hex values seperated by bytes and each line contains blocksize bytes.
         }
             
         printf("\n");

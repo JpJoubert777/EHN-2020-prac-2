@@ -30,7 +30,9 @@ Parameters:
 
 ECB AES usage example:\
 ./main -e -ecb \<len\> -t \<text to process\> -key \<password\>\
-NOTE: ECB AES refers to pure AES encryption and this mode may only be used for encryption of text strings.
+NOTE: ECB AES refers to pure AES encryption and this mode may only be used for encryption of text strings. Remember to use quotation marks for text and key like so:
+./main -e -ecb 128 -t "EHN 410 practical 2" -key "AES_encrypt"
+
 
 
 CFB AES usage example:\
